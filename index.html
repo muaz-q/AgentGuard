@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AgentGuard — Know Your AI Agent's Cost Before It Bankrupts You</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --primary: #0a4f3c;
+    --primary-light: #0d6b52;
+    --primary-bright: #10896a;
+    --primary-glow: #12a37e;
+    --accent: #00e5a0;
+    --accent-dim: #00b87e;
+    --bg: #050d0a;
+    --bg-2: #080f0c;
+    --bg-surface: #0d1a15;
+    --bg-card: #0f2019;
+    --border: #1a3329;
+    --border-light: #204030;
+    --text: #e8f5f0;
+    --text-muted: #7aa892;
+    --text-dim: #4d7a68;
+    --red: #ff4444;
+    --yellow: #ffcc00;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ─────────────────────────────────────── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.25rem 2rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(5,13,10,0.85);
+    backdrop-filter: blur(12px);
+  }
+  .nav-logo {
+    display: flex; align-items: center; gap: 0.6rem;
+    text-decoration: none;
+  }
+  .nav-logo-wordmark {
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+  }
+  .nav-logo .logo-bracket { color: var(--text-dim); }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-cta {
+    background: var(--accent);
+    color: var(--bg);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.5rem 1.25rem;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.15s;
+    letter-spacing: 0.05em;
+  }
+  .nav-cta:hover { background: #00ffb3; transform: translateY(-1px); }
+
+  /* ── HERO ─────────────────────────────────────── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    text-align: center;
+    padding: 8rem 2rem 5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 20%, rgba(10,79,60,0.45) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 80% 80%, rgba(0,229,160,0.04) 0%, transparent 60%),
+      linear-gradient(180deg, #050d0a 0%, #080f0c 100%);
+    pointer-events: none;
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 0%, transparent 100%);
+  }
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards 0.2s;
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+  .hero-eyebrow::before, .hero-eyebrow::after {
+    content: '';
+    display: block;
+    width: 2rem; height: 1px;
+    background: var(--accent);
+    opacity: 0.4;
+  }
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    max-width: 800px;
+    margin-bottom: 1.25rem;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards 0.35s;
+  }
+  .hero h1 .highlight {
+    color: var(--accent);
+    position: relative;
+  }
+  .hero-sub {
+    font-size: clamp(1.1rem, 2.5vw, 1.35rem);
+    color: var(--text-muted);
+    max-width: 480px;
+    font-weight: 400;
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards 0.5s;
+  }
+  .hero-actions {
+    display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
+    opacity: 0;
+    animation: fadeUp 0.6s ease forwards 0.65s;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--bg);
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 0.875rem 2rem;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .btn-primary:hover { background: #00ffb3; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,229,160,0.25); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-muted);
+    font-family: var(--mono);
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.875rem 2rem;
+    border: 1px solid var(--border-light);
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+
+  /* ── TERMINAL SECTION ─────────────────────────── */
+  .section { padding: 6rem 2rem; max-width: 1100px; margin: 0 auto; }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+  .section-label::before { content: '//'; color: var(--text-dim); }
+  .section-title {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+    line-height: 1.15;
+  }
+  .section-desc {
+    color: var(--text-muted);
+    max-width: 540px;
+    margin-bottom: 3rem;
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  .terminal-wrap {
+    position: relative;
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  .terminal-glow {
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, var(--primary-bright), transparent 60%);
+    opacity: 0.3;
+    filter: blur(8px);
+    border-radius: 4px;
+    pointer-events: none;
+  }
+  .terminal {
+    background: #080f0c;
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .terminal-bar {
+    background: #0d1a15;
+    padding: 0.75rem 1rem;
+    display: flex; align-items: center; gap: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .term-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .term-dot-r { background: #ff5f57; }
+  .term-dot-y { background: #febc2e; }
+  .term-dot-g { background: #28c840; }
+  .term-title {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-left: auto;
+    margin-right: auto;
+    letter-spacing: 0.05em;
+  }
+  .terminal-body {
+    padding: 1.5rem;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 2;
+    min-height: 320px;
+  }
+  .term-line { display: flex; align-items: flex-start; gap: 0.5rem; opacity: 0; }
+  .term-prompt { color: var(--accent); flex-shrink: 0; }
+  .term-cmd { color: var(--text); }
+  .term-output { color: var(--text-muted); padding-left: 0.5rem; }
+  .term-error { color: var(--red); }
+  .term-warn { color: var(--yellow); }
+  .term-success { color: var(--accent); }
+  .term-dim { color: var(--text-dim); }
+  .term-big {
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .cursor {
+    display: inline-block;
+    width: 8px; height: 1em;
+    background: var(--accent);
+    vertical-align: text-bottom;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* ── REAL OUTPUT STYLES ───────────────────────── */
+  .output-wrap {
+    max-width: 860px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .output-glow {
+    position: absolute; inset: -2px;
+    background: linear-gradient(135deg, rgba(0,229,160,0.12), transparent 60%);
+    filter: blur(10px);
+    border-radius: 4px;
+    pointer-events: none;
+  }
+  .output-panel {
+    background: #13191a;
+    border: 1px solid #2a3a36;
+    border-radius: 4px;
+    overflow: hidden;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    line-height: 1.75;
+  }
+  .output-topbar {
+    background: #0d1516;
+    padding: 0.65rem 1rem;
+    display: flex; align-items: center; gap: 0.5rem;
+    border-bottom: 1px solid #1e2e2a;
+  }
+  .term-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .term-dot-r { background: #ff5f57; }
+  .term-dot-y { background: #febc2e; }
+  .term-dot-g { background: #28c840; }
+  .term-title-bar {
+    font-family: var(--mono); font-size: 0.72rem;
+    color: #4d7060; margin: 0 auto; letter-spacing: 0.05em;
+  }
+
+  .op { padding: 1.5rem 1.75rem; }
+
+  /* ascii art */
+  .ascii-art {
+    color: #00d4ff;
+    font-size: 0.52rem;
+    line-height: 1.25;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.75rem;
+    white-space: pre;
+    opacity: 0;
+  }
+  .ascii-sub {
+    color: #5a7a70;
+    font-size: 0.75rem;
+    margin-bottom: 0.75rem;
+    opacity: 0;
+  }
+  .op-divider {
+    border: none;
+    border-top: 1px solid #2a3a36;
+    margin: 0.5rem 0 1.25rem;
+    opacity: 0;
+  }
+
+  /* sections */
+  .op-section-header {
+    color: #e8f0ee;
+    font-weight: 700;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
+    opacity: 0;
+  }
+  .op-section-divider {
+    border: none;
+    border-top: 1px solid #2a3a36;
+    margin-bottom: 1.25rem;
+    opacity: 0;
+  }
+
+  /* file block */
+  .op-file-name { color: #ff6b6b; font-weight: 700; opacity: 0; }
+  .op-file-meta { color: #7aa892; margin-left: 1rem; opacity: 0; }
+  .op-meta-num { color: #00e5a0; }
+  .op-risk-med { color: #ffcc00; font-weight: 700; }
+  .op-risk-high { color: #ff4444; font-weight: 700; }
+
+  /* loop sim */
+  .op-sim-header { color: #7aa892; margin: 0.75rem 0 0.25rem 1rem; opacity: 0; }
+  .op-sim-row { margin-left: 2rem; opacity: 0; }
+  .op-n { color: #c084fc; }
+  .op-cost-lo { color: #e8f0ee; }
+  .op-arrow { color: #5a7a70; }
+  .op-cost-hi { color: #ff9966; }
+  .op-bankruptcy { color: #ffcc00; font-weight: 700; }
+
+  /* risk flags */
+  .op-risk-flags-header { color: #ffcc00; font-weight: 700; margin: 1rem 0 0.2rem 1rem; opacity: 0; }
+  .op-flag { color: #e8f0ee; margin-left: 1.5rem; opacity: 0; }
+  .op-flag-icon { color: #ffcc00; }
+
+  /* optimizations */
+  .op-opt-header { color: #00e5a0; font-weight: 700; margin: 1rem 0 0.2rem 1rem; opacity: 0; }
+  .op-opt { color: #7aa892; margin-left: 1.5rem; opacity: 0; }
+  .op-opt-arrow { color: #00e5a0; }
+
+  /* cost summary */
+  .op-cost-row { display: flex; gap: 1.5rem; margin-bottom: 0.1rem; opacity: 0; }
+  .op-cost-label { color: #7aa892; min-width: 260px; }
+  .op-cost-val { color: #e8f0ee; font-weight: 600; }
+  .op-cost-val.green { color: #00e5a0; }
+  .op-cost-val.orange { color: #ff9966; }
+  .op-cost-range { color: #e8f0ee; }
+  .op-cost-range .lo { color: #e8f0ee; }
+  .op-cost-range .arr { color: #5a7a70; }
+  .op-cost-range .hi { color: #ff9966; }
+
+  /* top risk files */
+  .op-risk-filename { color: #ff6b6b; font-weight: 700; opacity: 0; }
+  .op-risk-count { color: #7aa892; }
+  .op-risk-flag { color: #e8f0ee; margin-left: 1.5rem; opacity: 0; }
+
+  /* recommendations */
+  .op-rec { color: #00bfff; margin-left: 0; opacity: 0; }
+
+  /* final prompt line */
+  .op-prompt { color: #7aa892; margin-top: 0.75rem; opacity: 0; }
+  .op-prompt-sym { color: #00e5a0; }
+
+  @keyframes termLine { to { opacity: 1; } }
+
+  /* ── HOW IT WORKS ─────────────────────────────── */
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-top: 2rem;
+  }
+  .step-card {
+    background: var(--bg-card);
+    padding: 2.5rem 2rem;
+    position: relative;
+    transition: background 0.25s;
+  }
+  .step-card:hover { background: #122318; }
+  .step-number {
+    font-family: var(--mono);
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: var(--primary-bright);
+    line-height: 1;
+    margin-bottom: 1.25rem;
+    opacity: 0.4;
+  }
+  .step-card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .step-card p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.65; }
+  .step-code {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--accent);
+    background: rgba(0,229,160,0.06);
+    border: 1px solid rgba(0,229,160,0.15);
+    padding: 0.4rem 0.75rem;
+    margin-top: 1rem;
+    display: inline-block;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── CODE BLOCK ───────────────────────────────── */
+  .install-section {
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .install-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 5rem 2rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+  }
+  .code-block {
+    background: #050d0a;
+    border: 1px solid var(--border-light);
+    position: relative;
+    padding: 1.5rem 1.75rem;
+  }
+  .code-block code {
+    font-family: var(--mono);
+    font-size: 1rem;
+    color: var(--text);
+    display: block;
+  }
+  .code-block code .cmd-prefix { color: var(--accent); margin-right: 0.5rem; }
+  .copy-btn {
+    position: absolute;
+    top: 0.75rem; right: 0.75rem;
+    background: var(--border-light);
+    color: var(--text-muted);
+    border: none;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    padding: 0.3rem 0.75rem;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.2s;
+  }
+  .copy-btn:hover { background: var(--primary-light); color: var(--accent); }
+  .copy-btn.copied { background: rgba(0,229,160,0.15); color: var(--accent); }
+  .install-text h2 { font-size: 1.75rem; font-weight: 800; margin-bottom: 0.75rem; }
+  .install-text p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.7; }
+
+  /* ── FEATURES ─────────────────────────────────── */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+  .feature-card {
+    border: 1px solid var(--border);
+    padding: 1.75rem;
+    background: var(--bg-card);
+    transition: border-color 0.25s, transform 0.2s;
+  }
+  .feature-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+  .feature-icon {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+  .feature-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+  .feature-card p { color: var(--text-muted); font-size: 0.85rem; line-height: 1.65; }
+
+  /* ── WHY IT MATTERS ───────────────────────────── */
+  .why-section {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg) 100%);
+  }
+  .why-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 5rem 2rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+  }
+  .why-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .stat-item {
+    border-left: 2px solid var(--accent);
+    padding-left: 1.25rem;
+  }
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+  .stat-label { color: var(--text-muted); font-size: 0.85rem; }
+  .why-text h2 { font-size: 1.75rem; font-weight: 800; margin-bottom: 1rem; line-height: 1.25; }
+  .why-text p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.8; margin-bottom: 1rem; }
+  .why-text .emphasis { color: var(--text); font-weight: 600; }
+
+  /* ── USAGE SECTION ────────────────────────────── */
+  .usage-wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .usage-wrap .code-block {
+    text-align: left;
+    margin-top: 2rem;
+  }
+
+  /* ── FOOTER ───────────────────────────────────── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 3rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .footer-logo {
+    font-family: var(--mono);
+    font-size: 1rem;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .footer-tagline {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    font-family: var(--mono);
+    margin-top: 0.25rem;
+  }
+  .footer-links { display: flex; gap: 1.5rem; align-items: center; }
+  .footer-links a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-family: var(--mono);
+    transition: color 0.2s;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .footer-links a:hover { color: var(--accent); }
+  .footer-copy { color: var(--text-dim); font-size: 0.75rem; font-family: var(--mono); }
+
+  /* ── ANIMATIONS ───────────────────────────────── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── DIVIDER ──────────────────────────────────── */
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border-light), transparent);
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  /* ── RESPONSIVE ───────────────────────────────── */
+  @media (max-width: 768px) {
+    nav { padding: 1rem; }
+    .nav-links { display: none; }
+    .install-inner { grid-template-columns: 1fr; }
+    .why-inner { grid-template-columns: 1fr; }
+    .hero { padding: 7rem 1.5rem 4rem; }
+    .section { padding: 4rem 1.5rem; }
+    footer { flex-direction: column; align-items: flex-start; }
+  }
+
+  /* ── USAGE NOTE ───────────────────────────────── */
+  .usage-note {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    text-align: center;
+    margin-top: 1rem;
+    padding: 0.5rem;
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  }
+  .usage-note::before { content: '→'; color: var(--accent); }
+
+  /* alert banner */
+  .alert-banner {
+    background: rgba(255,68,68,0.08);
+    border: 1px solid rgba(255,68,68,0.2);
+    padding: 0.6rem 1.25rem;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    color: var(--red);
+    text-align: center;
+    letter-spacing: 0.05em;
+  }
+
+  section {
+  scroll-margin-top: 100px;
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <!-- Option B: minimal sharp shield -->
+    <svg width="28" height="28" viewBox="0 0 88 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M44 4 L84 24 L84 52 Q84 80 44 92 Q4 80 4 52 L4 24 Z" fill="#0a4f3c" stroke="#00e5a0" stroke-width="3.5"/>
+      <line x1="44" y1="4" x2="44" y2="92" stroke="#00e5a0" stroke-width="1" opacity="0.2"/>
+      <text x="28" y="52" font-family="Arial Black, sans-serif" font-weight="900" font-size="28" fill="#ffffff">A</text>
+      <text x="48" y="64" font-family="Arial Black, sans-serif" font-weight="900" font-size="28" fill="#00e5a0">G</text>
+      <line x1="44" y1="4" x2="44" y2="14" stroke="#00e5a0" stroke-width="3" opacity="0.8"/>
+    </svg>
+    <span class="nav-logo-wordmark">AgentGuard</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#example">Example</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#install">Install</a></li>
+  </ul>
+  <a href="#install" class="nav-cta">pip install →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <span class="hero-eyebrow">AI Cost Intelligence CLI</span>
+  <!-- Hero logo mark: Option A circuit shield -->
+  <svg width="90" height="90" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:1.5rem; opacity:0; animation: fadeUp 0.6s ease forwards 0.15s;">
+    <!-- outer ring -->
+    <circle cx="100" cy="100" r="92" stroke="#00e5a0" stroke-width="1.5" opacity="0.3"/>
+    <circle cx="100" cy="100" r="87" stroke="#00e5a0" stroke-width="0.5" opacity="0.15"/>
+    <!-- ring ticks -->
+    <line x1="100" y1="8" x2="100" y2="2" stroke="#00e5a0" stroke-width="2" opacity="0.7"/>
+    <line x1="100" y1="192" x2="100" y2="198" stroke="#00e5a0" stroke-width="2" opacity="0.7"/>
+    <circle cx="100" cy="198" r="3" fill="#00e5a0" opacity="0.7"/>
+    <!-- shield -->
+    <path d="M100 30 L148 56 L148 98 Q148 148 100 168 Q52 148 52 98 L52 56 Z" fill="#0a1a14" stroke="#00e5a0" stroke-width="2.2"/>
+    <!-- inner shield accent -->
+    <path d="M100 42 L138 64 L138 96 Q138 136 100 152 Q62 136 62 96 L62 64 Z" fill="none" stroke="#00e5a0" stroke-width="0.8" opacity="0.2"/>
+    <!-- center divider line -->
+    <line x1="100" y1="30" x2="100" y2="168" stroke="#00e5a0" stroke-width="0.8" opacity="0.15"/>
+    <!-- AG text -->
+    <text x="100" y="112" text-anchor="middle" font-family="Arial Black, sans-serif" font-weight="900" font-size="42" fill="#00e5a0" letter-spacing="-2">AG</text>
+    <!-- circuit arms left -->
+    <line x1="52" y1="100" x2="28" y2="100" stroke="#00e5a0" stroke-width="1.2" opacity="0.5"/>
+    <line x1="28" y1="100" x2="14" y2="84" stroke="#00e5a0" stroke-width="1.2" opacity="0.5"/>
+    <circle cx="14" cy="84" r="3" fill="none" stroke="#00e5a0" stroke-width="1.2" opacity="0.6"/>
+    <line x1="28" y1="100" x2="12" y2="104" stroke="#00e5a0" stroke-width="1.2" opacity="0.5"/>
+    <circle cx="12" cy="104" r="3" fill="none" stroke="#00e5a0" stroke-width="1.2" opacity="0.6"/>
+    <line x1="28" y1="100" x2="16" y2="118" stroke="#00e5a0" stroke-width="1.2" opacity="0.5"/>
+    <circle cx="16" cy="118" r="3" fill="none" stroke="#00e5a0" stroke-width="1.2" opacity="0.6"/>
+    <!-- circuit arms right -->
+    <line x1="148" y1="100" x2="172" y2="100" stroke="#00e5a0" stroke-width="1.2" opacity="0.5"/>
+    <line x1="172" y1="100" x2="186" y2="84" stroke="#00e5a0" stroke-width="1.2" opacity="0.5"/>
+    <circle cx="186" cy="84" r="3" fill="none" stroke="#00e5a0" stroke-width="1.2" opacity="0.6"/>
+    <line x1="172" y1="100" x2="188" y2="104" stroke="#00e5a0" stroke-width="1.2" opacity="0.5"/>
+    <circle cx="188" cy="104" r="3" fill="none" stroke="#00e5a0" stroke-width="1.2" opacity="0.6"/>
+    <line x1="172" y1="100" x2="184" y2="118" stroke="#00e5a0" stroke-width="1.2" opacity="0.5"/>
+    <circle cx="184" cy="118" r="3" fill="none" stroke="#00e5a0" stroke-width="1.2" opacity="0.6"/>
+  </svg>
+  <h1>Your AI agent might cost <span class="highlight">$100k/month.</span></h1>
+  <p class="hero-sub">Find out before you run it.</p>
+  <div class="hero-actions">
+    <a href="#install" class="btn-primary">Get Started →</a>
+    <a href="#example" class="btn-secondary">↓ View Example</a>
+  </div>
+</section>
+
+<!-- EXAMPLE / TERMINAL -->
+<section id="example">
+  <div class="section">
+    <div class="section-label">Live Example</div>
+    <h2 class="section-title reveal">See exactly what AgentGuard catches.</h2>
+    <p class="section-desc reveal">Run it on any Python project. Get a cost projection in seconds.</p>
+
+    <div class="output-wrap reveal" id="output-wrap">
+      <div class="output-glow"></div>
+      <div class="output-panel">
+        <div class="output-topbar">
+          <div class="term-dot term-dot-r"></div>
+          <div class="term-dot term-dot-y"></div>
+          <div class="term-dot term-dot-g"></div>
+          <span class="term-title-bar">agentguard — bash — 120×50</span>
+        </div>
+        <div class="op">
+
+          <!-- ASCII art logo -->
+          <pre class="ascii-art" id="ascii">    /\                    __  ______                     __
+   /  \   ____ ____  ____/ /_/ ____/__  ______ __________/ /
+  / /\ \ / __ `/ _ \/ __  __/ / __/ / / / __ `/ ___/ __  /
+ / ____ / /_/ /  __/ / / / / /_/ / /_/ / /_/ / /  / /_/ /
+/_/    \_\__, /\___/_/ /_/  \____/\__,_/\__,_/_/   \__,_/
+         /____/</pre>
+          <div class="ascii-sub" id="asub">  Pre-execution Cost Estimator for Agentic AI Systems</div>
+          <hr class="op-divider" id="div0" />
+
+          <!-- FILE ANALYSIS -->
+          <div class="op-section-header" id="s1">FILE ANALYSIS</div>
+          <hr class="op-section-divider" id="div1" />
+
+          <div class="op-file-name" id="f1">  main.py &nbsp;<span style="color:#7aa892;font-weight:400">[ 🔄 py]</span></div>
+          <div class="op-file-meta" id="f2">  Calls: <span class="op-meta-num">1</span> &nbsp;•&nbsp; Loops: <span class="op-meta-num">1</span> &nbsp;•&nbsp; Risk: <span class="op-risk-med">⚡ MEDIUM</span></div>
+
+          <div class="op-sim-header" id="sh1">  Loop Depth Simulation:</div>
+          <div class="op-sim-row" id="sr1"><span class="op-n">N=&nbsp;&nbsp;1</span>  <span class="op-cost-lo">$0.0020</span> <span class="op-arrow">→</span> <span class="op-cost-hi">$0.0068</span>  <span style="color:#5a7a70">(1 calls)</span></div>
+          <div class="op-sim-row" id="sr2"><span class="op-n">N=&nbsp;&nbsp;5</span>  <span class="op-cost-lo">$0.0301</span> <span class="op-arrow">→</span> <span class="op-cost-hi">$0.1325</span>  <span style="color:#5a7a70">(5 calls)</span></div>
+          <div class="op-sim-row" id="sr3"><span class="op-n">N=&nbsp;20</span>  <span class="op-cost-lo">$0.4221</span> <span class="op-arrow">→</span> <span class="op-cost-hi">$1.86</span> &nbsp; <span style="color:#5a7a70">(20 calls)</span></div>
+          <div class="op-sim-row" id="sr4"><span class="op-n">N=100</span>  <span class="op-cost-lo">$10.15</span> &nbsp;<span class="op-arrow">→</span> <span class="op-cost-hi">$44.62</span>  <span style="color:#5a7a70">(100 calls)</span> <span class="op-bankruptcy">⚠ BANKRUPTCY RISK</span></div>
+
+          <div class="op-risk-flags-header" id="rfh">  Risk Flags:</div>
+          <div class="op-flag" id="rf1"><span class="op-flag-icon">⚡</span> API calls inside loops — cost grows with loop depth</div>
+          <div class="op-flag" id="rf2"><span class="op-flag-icon">⚡</span> No loop depth limiter found — unbounded execution risk</div>
+
+          <div class="op-opt-header" id="oh1">  Optimizations:</div>
+          <div class="op-opt" id="oo1"><span class="op-opt-arrow">→</span> Add max_iterations/max_steps guard to bound loop depth</div>
+          <div class="op-opt" id="oo2"><span class="op-opt-arrow">→</span> Consider model downgrade: frontier → flash/haiku (10-20× cheaper)</div>
+
+          <hr class="op-section-divider" id="div2" style="margin-top:1.25rem" />
+
+          <!-- COST SUMMARY -->
+          <div class="op-section-header" id="s2">COST SUMMARY</div>
+          <hr class="op-section-divider" id="div3" />
+
+          <div class="op-cost-row" id="cs1"><span class="op-cost-label">Model:</span><span class="op-cost-val">gpt-4o</span></div>
+          <div class="op-cost-row" id="cs2"><span class="op-cost-label">Files scanned:</span><span class="op-cost-val">1</span></div>
+          <div class="op-cost-row" id="cs3"><span class="op-cost-label">Files with LLM activity:</span><span class="op-cost-val">1</span></div>
+
+          <hr class="op-section-divider" id="div4" style="margin:0.75rem 0" />
+
+          <div class="op-cost-row" id="cs4">
+            <span class="op-cost-label">Total Cost Range (N=1 → N=100):</span>
+            <span class="op-cost-range"><span class="lo">$0.0020</span> <span class="arr">→</span> <span class="hi">$44.62</span></span>
+          </div>
+          <div class="op-cost-row" id="cs5"><span class="op-cost-label">Upper Bound (worst case, no opt):</span><span class="op-cost-val orange">$44.62</span></div>
+          <div class="op-cost-row" id="cs6"><span class="op-cost-label">Optimized Estimate (w/ caching):</span><span class="op-cost-val green">$44.62</span></div>
+          <div class="op-cost-row" id="cs7"><span class="op-cost-label">Savings Alpha:</span><span class="op-cost-val green">$0.00 (0%)</span></div>
+
+          <hr class="op-section-divider" id="div5" style="margin-top:1.25rem" />
+
+          <!-- TOP RISK FILES -->
+          <div class="op-section-header" id="s3" style="color:#ff4444">TOP RISK FILES</div>
+          <hr class="op-section-divider" id="div6" />
+
+          <div class="op-risk-filename" id="tr1">main.py <span class="op-risk-count">&nbsp;(2 risk flags)</span></div>
+          <div class="op-risk-flag" id="tr2"><span class="op-flag-icon">⚡</span> API calls inside loops — cost grows with loop depth</div>
+          <div class="op-risk-flag" id="tr3"><span class="op-flag-icon">⚡</span> No loop depth limiter found — unbounded execution risk</div>
+
+          <hr class="op-section-divider" id="div7" style="margin-top:1.25rem" />
+
+          <!-- RECOMMENDATIONS -->
+          <div class="op-section-header" id="s4" style="color:#00bfff">RECOMMENDATIONS</div>
+          <hr class="op-section-divider" id="div8" />
+
+          <div class="op-rec" id="rec1">1. Add max_iterations/max_steps guard to bound loop depth</div>
+          <div class="op-rec" id="rec2">2. Consider model downgrade: frontier → flash/haiku (10-20× cheaper)</div>
+
+          <div class="op-prompt" id="pr1"><span class="op-prompt-sym">$</span> <span id="blink-cursor" style="display:inline-block;width:8px;height:0.9em;background:#00e5a0;vertical-align:text-bottom;"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how" style="border-top: 1px solid var(--border);">
+  <div class="section">
+    <div class="section-label">How It Works</div>
+    <h2 class="section-title reveal">Three steps. No config needed.</h2>
+    <div class="steps-grid">
+      <div class="step-card reveal">
+        <div class="step-number">01</div>
+        <h3>Install AgentGuard</h3>
+        <p>One pip command. No API key, no sign-up, no PATH config required.</p>
+        <span class="step-code">python -m pip install agentguard</span>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-number">02</div>
+        <h3>Navigate to your project</h3>
+        <p>Point your terminal at any Python project directory containing agent code.</p>
+        <span class="step-code">cd your_project</span>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-number">03</div>
+        <h3>See cost risks instantly</h3>
+        <p>Run AgentGuard. Get a projected cost, risk severity, and exact file/line references.</p>
+        <span class="step-code">python -m agentguard.cli .</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL -->
+<section id="install" class="install-section">
+  <div class="install-inner">
+    <div class="install-text reveal">
+      <div class="section-label" style="margin-bottom: 0.75rem;">Installation</div>
+      <h2>One command to get started.</h2>
+      <p>No API key needed. No sign-up. No PATH configuration required — works everywhere Python works.</p>
+    </div>
+    <div class="reveal">
+      <div class="code-block" id="install-block">
+        <code><span class="cmd-prefix">$</span> python -m pip install agentguard</code>
+        <button class="copy-btn" onclick="copyCode('python -m pip install agentguard', this)">copy</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- USAGE -->
+<section id="usage">
+  <div class="section">
+    <div class="usage-wrap">
+      <div class="section-label" style="justify-content: center;">Usage</div>
+      <h2 class="section-title reveal">Run it. That's it.</h2>
+      <p class="section-desc reveal" style="margin: 0 auto;">
+        Navigate into your project folder, then run AgentGuard. It recursively scans all Python files and subfolders — no config needed.
+      </p>
+
+      <!-- Primary method -->
+      <div class="reveal" style="margin-top: 2rem; text-align: left;">
+        <div style="font-family: var(--mono); font-size: 0.7rem; color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.5rem;">⭐ Recommended — works everywhere</div>
+        <div class="code-block">
+          <code><span class="cmd-prefix">$</span> python -m agentguard.cli .</code>
+          <button class="copy-btn" onclick="copyCode('python -m agentguard.cli .', this)">copy</button>
+        </div>
+      </div>
+
+      <!-- Alternative method -->
+      <div class="reveal" style="margin-top: 1rem; text-align: left;">
+        <div style="font-family: var(--mono); font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.5rem;">Alternative — if PATH is configured</div>
+        <div class="code-block" style="border-color: var(--border); opacity: 0.7;">
+          <code style="color: var(--text-muted);"><span class="cmd-prefix" style="color: var(--text-dim);">$</span> agentguard .</code>
+          <button class="copy-btn" onclick="copyCode('agentguard .', this)">copy</button>
+        </div>
+      </div>
+
+      <!-- What does "." mean -->
+      <div class="reveal" style="margin-top: 2rem; text-align: left; border: 1px solid var(--border); background: var(--bg-card); padding: 1.25rem 1.5rem;">
+        <div style="font-family: var(--mono); font-size: 0.72rem; color: var(--accent); letter-spacing: 0.1em; margin-bottom: 0.6rem;">// WHAT DOES "." MEAN?</div>
+        <div style="font-family: var(--mono); font-size: 0.82rem; color: var(--text-muted); line-height: 1.8;">
+          <span style="color: var(--accent);">"."</span> = current folder. AgentGuard will recursively scan:<br>
+          <span style="color: var(--text-dim); margin-left: 1rem;">→</span> All <span style="color: var(--text);">.py</span> files in the current folder<br>
+          <span style="color: var(--text-dim); margin-left: 1rem;">→</span> All subfolders inside it, automatically
+        </div>
+      </div>
+
+      <!-- Root directory tip -->
+      <div class="reveal" style="margin-top: 1rem; text-align: left; border: 1px solid rgba(255,204,0,0.2); background: rgba(255,204,0,0.04); padding: 1rem 1.5rem; display: flex; gap: 1rem; align-items: flex-start;">
+        <span style="font-size: 1rem; flex-shrink: 0; margin-top: 0.05rem;">💡</span>
+        <div style="font-family: var(--mono); font-size: 0.8rem; line-height: 1.75;">
+          <span style="color: #ffcc00; font-weight: 700; letter-spacing: 0.05em;">TIP — Run from your project root.</span><br>
+          <span style="color: var(--text-muted);">
+            <span style="color: var(--text);">python -m agentguard.cli .</span> crawls subfolders automatically,
+            so running it from the root directory gives you full coverage in one pass.
+            Running it from a subfolder only scans that subfolder and below.
+          </span>
+        </div>
+      </div>
+
+      <!-- Method comparison table -->
+      <div class="reveal" style="margin-top: 2rem; text-align: left; overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 0.8rem;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border-light);">
+              <th style="text-align: left; padding: 0.6rem 1rem; color: var(--text-muted); font-weight: 600; letter-spacing: 0.05em;">Method</th>
+              <th style="text-align: center; padding: 0.6rem 1rem; color: var(--text-muted); font-weight: 600; letter-spacing: 0.05em;">Works Without PATH</th>
+              <th style="text-align: center; padding: 0.6rem 1rem; color: var(--text-muted); font-weight: 600; letter-spacing: 0.05em;">Recommended</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid var(--border); background: rgba(0,229,160,0.03);">
+              <td style="padding: 0.65rem 1rem; color: var(--text);">python -m agentguard.cli .</td>
+              <td style="padding: 0.65rem 1rem; text-align: center; color: #00e5a0;">✅ Yes</td>
+              <td style="padding: 0.65rem 1rem; text-align: center; color: #ffcc00;">⭐ Best</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 0.65rem 1rem; color: var(--text-muted);">agentguard .</td>
+              <td style="padding: 0.65rem 1rem; text-align: center; color: var(--text-dim);">❌ Needs PATH</td>
+              <td style="padding: 0.65rem 1rem; text-align: center; color: var(--text-dim);">Optional</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="usage-note">Scans all .py files in the current directory and all subdirectories</div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features" style="border-top: 1px solid var(--border); padding-bottom: 0;">
+  <div class="section">
+    <div class="section-label">What It Detects</div>
+    <h2 class="section-title reveal">Built for the failure modes that hurt.</h2>
+    <p class="section-desc reveal">AgentGuard catches the patterns that quietly turn a $10/day agent into a $100k/month disaster.</p>
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <span class="feature-icon">🔁</span>
+        <h3>LLM Calls in Loops</h3>
+        <p>Detects any LLM API call inside a for, while, or recursive function. Flags the exact line.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">📈</span>
+        <h3>Context Growth Analysis</h3>
+        <p>Identifies whether your context window grows linearly or quadratically across agent iterations.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🌀</span>
+        <h3>Recursion Risk</h3>
+        <p>Finds recursive tool use and estimates worst-case call depth at production scale.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">💸</span>
+        <h3>Cost Scaling Simulation</h3>
+        <p>Projects monthly costs under linear vs quadratic scaling assumptions, benchmarked to model pricing.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY IT MATTERS -->
+<section class="why-section">
+  <div class="why-inner">
+    <div class="why-stat reveal">
+      <div class="stat-item">
+        <div class="stat-value">O(n²)</div>
+        <div class="stat-label">Context growth in most naive agent loops</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">$133k</div>
+        <div class="stat-label">Projected monthly cost for one unoptimized agent</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">&lt; 2s</div>
+        <div class="stat-label">Time to scan a typical project with AgentGuard</div>
+      </div>
+    </div>
+    <div class="why-text reveal">
+      <div class="section-label" style="margin-bottom: 0.75rem;">Why It Matters</div>
+      <h2>AI agents silently compound costs until it's too late.</h2>
+      <p>
+        Most agent frameworks make it trivially easy to write a loop that calls an LLM on every iteration, appending
+        the output to a growing context. At small scale, it's fine. At production scale, it's catastrophic.
+      </p>
+      <p>
+        <span class="emphasis">A context that grows by 1,000 tokens per step reaches 1M tokens in 1,000 steps.</span>
+        At GPT-4 pricing, that single run costs over $1,000. Run it hourly and you've burned $24k before you've noticed.
+      </p>
+      <p>
+        AgentGuard exists to <span class="emphasis">prevent expensive mistakes before deployment</span> — not after the invoice arrives.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div style="display:flex; align-items:center; gap:1rem;">
+    <!-- Option A: circuit shield (footer size) -->
+    <svg width="42" height="42" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+      <circle cx="100" cy="100" r="92" stroke="#00e5a0" stroke-width="1.5" opacity="0.25"/>
+      <line x1="100" y1="8" x2="100" y2="2" stroke="#00e5a0" stroke-width="2" opacity="0.6"/>
+      <line x1="100" y1="192" x2="100" y2="198" stroke="#00e5a0" stroke-width="2" opacity="0.6"/>
+      <circle cx="100" cy="198" r="3" fill="#00e5a0" opacity="0.6"/>
+      <path d="M100 30 L148 56 L148 98 Q148 148 100 168 Q52 148 52 98 L52 56 Z" fill="#0a1a14" stroke="#00e5a0" stroke-width="2.2"/>
+      <text x="100" y="112" text-anchor="middle" font-family="Arial Black, sans-serif" font-weight="900" font-size="42" fill="#00e5a0" letter-spacing="-2">AG</text>
+      <line x1="52" y1="100" x2="28" y2="100" stroke="#00e5a0" stroke-width="1.2" opacity="0.45"/>
+      <line x1="28" y1="100" x2="14" y2="84" stroke="#00e5a0" stroke-width="1.2" opacity="0.45"/>
+      <circle cx="14" cy="84" r="3" fill="none" stroke="#00e5a0" stroke-width="1.2" opacity="0.5"/>
+      <line x1="28" y1="100" x2="12" y2="104" stroke="#00e5a0" stroke-width="1.2" opacity="0.45"/>
+      <circle cx="12" cy="104" r="3" fill="none" stroke="#00e5a0" stroke-width="1.2" opacity="0.5"/>
+      <line x1="28" y1="100" x2="16" y2="118" stroke="#00e5a0" stroke-width="1.2" opacity="0.45"/>
+      <circle cx="16" cy="118" r="3" fill="none" stroke="#00e5a0" stroke-width="1.2" opacity="0.5"/>
+      <line x1="148" y1="100" x2="172" y2="100" stroke="#00e5a0" stroke-width="1.2" opacity="0.45"/>
+      <line x1="172" y1="100" x2="186" y2="84" stroke="#00e5a0" stroke-width="1.2" opacity="0.45"/>
+      <circle cx="186" cy="84" r="3" fill="none" stroke="#00e5a0" stroke-width="1.2" opacity="0.5"/>
+      <line x1="172" y1="100" x2="188" y2="104" stroke="#00e5a0" stroke-width="1.2" opacity="0.45"/>
+      <circle cx="188" cy="104" r="3" fill="none" stroke="#00e5a0" stroke-width="1.2" opacity="0.5"/>
+      <line x1="172" y1="100" x2="184" y2="118" stroke="#00e5a0" stroke-width="1.2" opacity="0.45"/>
+      <circle cx="184" cy="118" r="3" fill="none" stroke="#00e5a0" stroke-width="1.2" opacity="0.5"/>
+    </svg>
+    <div>
+      <div class="footer-logo">AgentGuard</div>
+      <div class="footer-tagline">// know your costs before you run</div>
+    </div>
+  </div>
+  <div class="footer-links">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+      GitHub
+    </a>
+    <a href="https://github.com/muaz-q/" target="_blank" rel="noopener">
+      Author
+    </a>
+  </div>
+  <div class="footer-copy">2025 AgentGuard</div>
+</footer>
+
+<script>
+  // Copy button
+  function copyCode(text, btn) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = 'copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+    });
+  }
+
+  // Scroll reveal for generic elements
+  const reveals = document.querySelectorAll('.reveal');
+  const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+        revealObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => revealObs.observe(el));
+
+  // ── Output panel sequenced animation ──────────────
+  // Each entry: [id, delay_ms]
+  const sequence = [
+    ['ascii',  300],
+    ['asub',   700],
+    ['div0',   900],
+    ['s1',    1100],
+    ['div1',  1200],
+    ['f1',    1400],
+    ['f2',    1550],
+    ['sh1',   1750],
+    ['sr1',   1950],
+    ['sr2',   2150],
+    ['sr3',   2350],
+    ['sr4',   2600],
+    ['rfh',   2900],
+    ['rf1',   3050],
+    ['rf2',   3200],
+    ['oh1',   3450],
+    ['oo1',   3600],
+    ['oo2',   3750],
+    ['div2',  4000],
+    ['s2',    4100],
+    ['div3',  4200],
+    ['cs1',   4350],
+    ['cs2',   4480],
+    ['cs3',   4610],
+    ['div4',  4750],
+    ['cs4',   4900],
+    ['cs5',   5050],
+    ['cs6',   5180],
+    ['cs7',   5310],
+    ['div5',  5500],
+    ['s3',    5600],
+    ['div6',  5700],
+    ['tr1',   5850],
+    ['tr2',   6000],
+    ['tr3',   6150],
+    ['div7',  6350],
+    ['s4',    6450],
+    ['div8',  6550],
+    ['rec1',  6700],
+    ['rec2',  6850],
+    ['pr1',   7100],
+  ];
+
+  let outputStarted = false;
+
+  function startOutputAnimation() {
+    if (outputStarted) return;
+    outputStarted = true;
+    sequence.forEach(([id, delay]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      setTimeout(() => {
+        el.style.transition = 'opacity 0.25s ease';
+        el.style.opacity = '1';
+      }, delay);
+    });
+    // blink cursor after it appears
+    setTimeout(() => {
+      const cur = document.getElementById('blink-cursor');
+      if (cur) cur.style.animation = 'blink 1s step-end infinite';
+    }, 7200);
+  }
+
+  // Trigger when the output panel scrolls into view
+  const outputPanel = document.getElementById('output-wrap');
+  if (outputPanel) {
+    const panelObs = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        startOutputAnimation();
+        panelObs.unobserve(outputPanel);
+      }
+    }, { threshold: 0.15 });
+    panelObs.observe(outputPanel);
+  }
+</script>
+</body>
+</html>
