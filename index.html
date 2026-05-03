@@ -664,10 +664,6 @@
     text-align: center;
     letter-spacing: 0.05em;
   }
-
-  section {
-  scroll-margin-top: 100px;
-}
 </style>
 </head>
 <body>
@@ -836,102 +832,6 @@
   </div>
 </section>
 
-<!-- WHAT JUST HAPPENED (NEW SECTION — ADDED) -->
-<section style="border-top: 1px solid var(--border);">
-  <div class="section">
-    <div class="section-label">What Just Happened</div>
-    <h2 class="section-title reveal">Your agent looked harmless. It wasn’t.</h2>
-    <p class="section-desc reveal">
-      AgentGuard scanned your code and found a hidden cost explosion pattern.
-    </p>
-
-    <div class="reveal" style="margin-top:2rem; border:1px solid var(--border); background:var(--bg-card); padding:2rem;">
-      <div style="font-family:var(--mono); font-size:0.9rem; line-height:1.9; color:var(--text-muted);">
-        <div>→ API calls inside loops</div>
-        <div>→ No loop depth limit</div>
-        <div>→ Cost increases exponentially with usage</div>
-      </div>
-
-      <div style="margin-top:1.5rem; font-family:var(--mono); font-size:0.95rem; color:var(--text);">
-        At <span style="color:var(--accent); font-weight:700;">100 iterations</span> → 
-        <span style="color:#ff9966; font-weight:700;">$44.62 per run</span>
-      </div>
-
-      <div style="margin-top:0.5rem; font-family:var(--mono); font-size:0.8rem; color:var(--text-dim);">
-        Multiply that by production usage → silent cost explosion.
-      </div>
-    </div>
-  </div>
-</section>
-
-
-<!-- BANKRUPTCY RISK EMPHASIS (NEW SECTION — ADDED) -->
-<section class="why-section" style="border-top:none;">
-  <div class="why-inner">
-    <div class="why-text reveal">
-      <div class="section-label" style="margin-bottom: 0.75rem;">Critical Risk</div>
-      <h2 style="color:#ff4444;">⚠ BANKRUPTCY RISK is not a joke.</h2>
-      <p>
-        Most developers never simulate worst-case execution.  
-        They test with small inputs, deploy, and only notice the cost 
-        <span class="emphasis">after the bill arrives.</span>
-      </p>
-      <p>
-        AgentGuard forces worst-case thinking before deployment — 
-        where it actually matters.
-      </p>
-    </div>
-
-    <div class="why-stat reveal">
-      <div class="stat-item">
-        <div class="stat-value">$44.62</div>
-        <div class="stat-label">Per run at N=100</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value">$133k+</div>
-        <div class="stat-label">Projected monthly burn</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value">∞</div>
-        <div class="stat-label">If loop is unbounded</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-<!-- FINAL VERDICT (NEW SECTION — ADDED) -->
-<section style="border-top: 1px solid var(--border);">
-  <div class="section">
-    <div class="section-label">Decision Engine</div>
-    <h2 class="section-title reveal">Not just analysis. A clear verdict.</h2>
-
-    <div class="reveal" style="margin-top:2rem; max-width:700px;">
-      <div style="background:#080f0c; border:1px solid var(--border-light); padding:1.75rem; font-family:var(--mono);">
-
-        <div style="color:#ff4444; font-weight:700; font-size:1rem; margin-bottom:1rem;">
-          ❌ UNSAFE TO DEPLOY
-        </div>
-
-        <div style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">
-          Reason:
-        </div>
-
-        <div style="color:var(--text); font-size:0.85rem; line-height:1.8;">
-          → Unbounded loop detected<br>
-          → API calls inside loop<br>
-          → Exponential cost growth
-        </div>
-
-        <div style="margin-top:1.5rem; color:var(--accent); font-size:0.85rem;">
-          Fix before production.
-        </div>
-
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- HOW IT WORKS -->
 <section id="how" style="border-top: 1px solid var(--border);">
   <div class="section">
@@ -942,7 +842,7 @@
         <div class="step-number">01</div>
         <h3>Install AgentGuard</h3>
         <p>One pip command. No API key, no sign-up, no PATH config required.</p>
-        <span class="step-code">python -m pip install agentguard</span>
+        <span class="step-code">pip install agentguard-cli</span>
       </div>
       <div class="step-card reveal">
         <div class="step-number">02</div>
@@ -970,8 +870,13 @@
     </div>
     <div class="reveal">
       <div class="code-block" id="install-block">
-        <code><span class="cmd-prefix">$</span> python -m pip install agentguard</code>
-        <button class="copy-btn" onclick="copyCode('python -m pip install agentguard', this)">copy</button>
+        <code><span class="cmd-prefix">$</span> pip install agentguard-cli</code>
+        <button class="copy-btn" onclick="copyCode('pip install agentguard-cli', this)">copy</button>
+      </div>
+      <div style="font-family: var(--mono); font-size: 0.72rem; color: var(--text-dim); letter-spacing: 0.05em; margin: 1rem 0 0.5rem;">If the command doesn't work on your system, run:</div>
+      <div class="code-block" style="border-color: var(--border);">
+        <code style="color: var(--text-muted);"><span class="cmd-prefix" style="color: var(--text-dim);">$</span> python -m agentguard.cli .</code>
+        <button class="copy-btn" onclick="copyCode('python -m agentguard.cli .', this)">copy</button>
       </div>
     </div>
   </div>
@@ -1158,12 +1063,9 @@
   <div class="footer-links">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
       GitHub
-    </a>
-    <a href="https://github.com/muaz-q/" target="_blank" rel="noopener">
-      Author
-    </a>
+    <a href="https://github.com/muaz-q">Author</a>
   </div>
-  <div class="footer-copy">2025 AgentGuard</div>
+  <div class="footer-copy">MIT License · 2025 AgentGuard</div>
 </footer>
 
 <script>
