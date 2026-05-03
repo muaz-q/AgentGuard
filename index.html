@@ -836,6 +836,102 @@
   </div>
 </section>
 
+<!-- WHAT JUST HAPPENED (NEW SECTION — ADDED) -->
+<section style="border-top: 1px solid var(--border);">
+  <div class="section">
+    <div class="section-label">What Just Happened</div>
+    <h2 class="section-title reveal">Your agent looked harmless. It wasn’t.</h2>
+    <p class="section-desc reveal">
+      AgentGuard scanned your code and found a hidden cost explosion pattern.
+    </p>
+
+    <div class="reveal" style="margin-top:2rem; border:1px solid var(--border); background:var(--bg-card); padding:2rem;">
+      <div style="font-family:var(--mono); font-size:0.9rem; line-height:1.9; color:var(--text-muted);">
+        <div>→ API calls inside loops</div>
+        <div>→ No loop depth limit</div>
+        <div>→ Cost increases exponentially with usage</div>
+      </div>
+
+      <div style="margin-top:1.5rem; font-family:var(--mono); font-size:0.95rem; color:var(--text);">
+        At <span style="color:var(--accent); font-weight:700;">100 iterations</span> → 
+        <span style="color:#ff9966; font-weight:700;">$44.62 per run</span>
+      </div>
+
+      <div style="margin-top:0.5rem; font-family:var(--mono); font-size:0.8rem; color:var(--text-dim);">
+        Multiply that by production usage → silent cost explosion.
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- BANKRUPTCY RISK EMPHASIS (NEW SECTION — ADDED) -->
+<section class="why-section" style="border-top:none;">
+  <div class="why-inner">
+    <div class="why-text reveal">
+      <div class="section-label" style="margin-bottom: 0.75rem;">Critical Risk</div>
+      <h2 style="color:#ff4444;">⚠ BANKRUPTCY RISK is not a joke.</h2>
+      <p>
+        Most developers never simulate worst-case execution.  
+        They test with small inputs, deploy, and only notice the cost 
+        <span class="emphasis">after the bill arrives.</span>
+      </p>
+      <p>
+        AgentGuard forces worst-case thinking before deployment — 
+        where it actually matters.
+      </p>
+    </div>
+
+    <div class="why-stat reveal">
+      <div class="stat-item">
+        <div class="stat-value">$44.62</div>
+        <div class="stat-label">Per run at N=100</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">$133k+</div>
+        <div class="stat-label">Projected monthly burn</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">∞</div>
+        <div class="stat-label">If loop is unbounded</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- FINAL VERDICT (NEW SECTION — ADDED) -->
+<section style="border-top: 1px solid var(--border);">
+  <div class="section">
+    <div class="section-label">Decision Engine</div>
+    <h2 class="section-title reveal">Not just analysis. A clear verdict.</h2>
+
+    <div class="reveal" style="margin-top:2rem; max-width:700px;">
+      <div style="background:#080f0c; border:1px solid var(--border-light); padding:1.75rem; font-family:var(--mono);">
+
+        <div style="color:#ff4444; font-weight:700; font-size:1rem; margin-bottom:1rem;">
+          ❌ UNSAFE TO DEPLOY
+        </div>
+
+        <div style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">
+          Reason:
+        </div>
+
+        <div style="color:var(--text); font-size:0.85rem; line-height:1.8;">
+          → Unbounded loop detected<br>
+          → API calls inside loop<br>
+          → Exponential cost growth
+        </div>
+
+        <div style="margin-top:1.5rem; color:var(--accent); font-size:0.85rem;">
+          Fix before production.
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- HOW IT WORKS -->
 <section id="how" style="border-top: 1px solid var(--border);">
   <div class="section">
