@@ -1,0 +1,147 @@
+{
+  "suffixes": [
+    "chat.completions.create",
+    "chat.completions.parse",
+    "responses.create",
+    "messages.create",
+    "messages.stream",
+    "litellm.completion",
+    "litellm.acompletion",
+    "generate_content"
+  ],
+  "repos": [
+    {
+      "set": "tuning",
+      "repo": "Aider-AI/aider",
+      "baseline": 2,
+      "found": 2
+    },
+    {
+      "set": "tuning",
+      "repo": "AntonOsika/gpt-engineer",
+      "baseline": 1,
+      "found": 1
+    },
+    {
+      "set": "tuning",
+      "repo": "OpenInterpreter/open-interpreter",
+      "baseline": 0,
+      "found": 0
+    },
+    {
+      "set": "tuning",
+      "repo": "SWE-agent/SWE-agent",
+      "baseline": 1,
+      "found": 1
+    },
+    {
+      "set": "tuning",
+      "repo": "TransformerOptimus/SuperAGI",
+      "baseline": 0,
+      "found": 0
+    },
+    {
+      "set": "tuning",
+      "repo": "assafelovic/gpt-researcher",
+      "baseline": 1,
+      "found": 1
+    },
+    {
+      "set": "tuning",
+      "repo": "crewAIInc/crewAI",
+      "baseline": 31,
+      "found": 31
+    },
+    {
+      "set": "tuning",
+      "repo": "geekan/MetaGPT",
+      "baseline": 9,
+      "found": 9
+    },
+    {
+      "set": "tuning",
+      "repo": "huggingface/smolagents",
+      "baseline": 1,
+      "found": 1
+    },
+    {
+      "set": "tuning",
+      "repo": "langchain-ai/open_deep_research",
+      "baseline": 0,
+      "found": 0
+    },
+    {
+      "set": "tuning",
+      "repo": "openai/openai-agents-python",
+      "baseline": 7,
+      "found": 7
+    },
+    {
+      "set": "tuning",
+      "repo": "openai/swarm",
+      "baseline": 5,
+      "found": 5
+    },
+    {
+      "set": "tuning",
+      "repo": "stanfordnlp/dspy",
+      "baseline": 3,
+      "found": 3
+    },
+    {
+      "set": "tuning",
+      "repo": "yoheinakajima/babyagi",
+      "baseline": 3,
+      "found": 3
+    },
+    {
+      "set": "holdout",
+      "repo": "browser-use/browser-use",
+      "baseline": 30,
+      "found": 30
+    },
+    {
+      "set": "holdout",
+      "repo": "qodo-ai/pr-agent",
+      "baseline": 1,
+      "found": 1
+    },
+    {
+      "set": "holdout",
+      "repo": "mem0ai/mem0",
+      "baseline": 17,
+      "found": 17
+    },
+    {
+      "set": "holdout",
+      "repo": "camel-ai/camel",
+      "baseline": 12,
+      "found": 12
+    },
+    {
+      "set": "holdout",
+      "repo": "Significant-Gravitas/AutoGPT",
+      "baseline": 24,
+      "found": 24
+    },
+    {
+      "set": "holdout",
+      "repo": "khoj-ai/khoj",
+      "baseline": 11,
+      "found": 11
+    },
+    {
+      "set": "holdout",
+      "repo": "pydantic/pydantic-ai",
+      "baseline": 10,
+      "found": 10
+    },
+    {
+      "set": "holdout",
+      "repo": "microsoft/TaskWeaver",
+      "baseline": 7,
+      "found": 7
+    }
+  ],
+  "missed": []
+}

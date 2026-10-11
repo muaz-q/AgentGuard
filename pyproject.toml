@@ -24,7 +24,15 @@ classifiers = [
 dependencies = ["tomli>=1.1; python_version < '3.11'"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.6", "mypy>=1.10"]
+mcp = ["mcp>=2.3,<3; python_version >= '3.10'"]
+dev = [
+    "pytest>=8",
+    "pytest-cov>=5",
+    "pytest-asyncio>=1.0; python_version >= '3.10'",
+    "mcp>=2.3,<3; python_version >= '3.10'",
+    "ruff>=0.6",
+    "mypy>=1.10",
+]
 
 [project.urls]
 Homepage = "https://agent-guard-six.vercel.app"
@@ -33,6 +41,7 @@ Issues = "https://github.com/muaz-q/agentguard/issues"
 
 [project.scripts]
 agentguard = "agentguard.cli:entry"
+agentguard-mcp = "agentguard.mcp_server:main"
 
 [tool.setuptools.packages.find]
 include = ["agentguard*"]
@@ -43,6 +52,7 @@ agentguard = ["data/*.json", "py.typed"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+asyncio_mode = "auto"
 
 [tool.coverage.run]
 source = ["agentguard"]
@@ -63,4 +73,5 @@ ignore_missing_imports = true
 warn_unused_ignores = false
 
 [tool.agentguard]
-exclude = ["tests/fixtures/*", "bench/*"]
+# The demo agent is broken on purpose; `agentguard examples/research_agent.py` still scans it.
+exclude = ["tests/fixtures/*", "bench/*", "examples/research_agent.py"]

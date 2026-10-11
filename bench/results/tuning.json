@@ -1,0 +1,180 @@
+{
+  "set": "tuning",
+  "repos": [
+    {
+      "repo": "Aider-AI/aider",
+      "commit": "5dc9490bb35f9729ef2c95d00a19ccd30c26339c",
+      "files": 105,
+      "lines": 25853,
+      "parse_errors": 0,
+      "call_sites": 3,
+      "indirect_sites": 1,
+      "findings": {},
+      "seconds": 1.77
+    },
+    {
+      "repo": "AntonOsika/gpt-engineer",
+      "commit": "a90fcd543eedcc0ff2c34561bc0785d2ba83c47e",
+      "files": 58,
+      "lines": 6894,
+      "parse_errors": 0,
+      "call_sites": 2,
+      "indirect_sites": 0,
+      "findings": {},
+      "seconds": 0.41
+    },
+    {
+      "repo": "OpenInterpreter/open-interpreter",
+      "commit": "ac1fcc8fe57aba51fcc3c79afd57a0883237fe87",
+      "files": 125,
+      "lines": 40963,
+      "parse_errors": 0,
+      "call_sites": 0,
+      "indirect_sites": 0,
+      "findings": {},
+      "seconds": 5.21
+    },
+    {
+      "repo": "SWE-agent/SWE-agent",
+      "commit": "3ea751c087f32b16e039a2233dd6eefecef325d5",
+      "files": 68,
+      "lines": 12477,
+      "parse_errors": 0,
+      "call_sites": 4,
+      "indirect_sites": 3,
+      "findings": {},
+      "seconds": 1.62
+    },
+    {
+      "repo": "TransformerOptimus/SuperAGI",
+      "commit": "c3c1982e7bd6a11cfed53c5a193ea502f924b1b6",
+      "files": 306,
+      "lines": 23950,
+      "parse_errors": 0,
+      "call_sites": 2,
+      "indirect_sites": 1,
+      "findings": {},
+      "seconds": 3.26
+    },
+    {
+      "repo": "assafelovic/gpt-researcher",
+      "commit": "3582a6841fe7dc801e2a34e34ee408641aea9bce",
+      "files": 217,
+      "lines": 26038,
+      "parse_errors": 1,
+      "call_sites": 8,
+      "indirect_sites": 7,
+      "findings": {
+        "AG006": 1
+      },
+      "seconds": 2.0
+    },
+    {
+      "repo": "crewAIInc/crewAI",
+      "commit": "6b93fa0e25a926215ca7bb52a95d4db7d9d7262d",
+      "files": 951,
+      "lines": 324006,
+      "parse_errors": 5,
+      "call_sites": 84,
+      "indirect_sites": 48,
+      "findings": {
+        "AG003": 1,
+        "AG004": 3,
+        "AG005": 2,
+        "AG006": 8
+      },
+      "seconds": 24.23
+    },
+    {
+      "repo": "geekan/MetaGPT",
+      "commit": "11cdf466d042aece04fc6cfd13b28e1a70341b1f",
+      "files": 580,
+      "lines": 66151,
+      "parse_errors": 0,
+      "call_sites": 18,
+      "indirect_sites": 6,
+      "findings": {},
+      "seconds": 6.01
+    },
+    {
+      "repo": "huggingface/smolagents",
+      "commit": "96f33faaf028479119ec8d34507b47694cf14e34",
+      "files": 48,
+      "lines": 17673,
+      "parse_errors": 0,
+      "call_sites": 2,
+      "indirect_sites": 1,
+      "findings": {
+        "AG006": 1
+      },
+      "seconds": 1.04
+    },
+    {
+      "repo": "langchain-ai/open_deep_research",
+      "commit": "1b7d2e80db9faa586165c60e09096dbbfd483a64",
+      "files": 13,
+      "lines": 5837,
+      "parse_errors": 0,
+      "call_sites": 7,
+      "indirect_sites": 0,
+      "findings": {},
+      "seconds": 0.28
+    },
+    {
+      "repo": "openai/openai-agents-python",
+      "commit": "125efa029b4bfd84238bd2c4fd69c3406f802663",
+      "files": 551,
+      "lines": 170426,
+      "parse_errors": 0,
+      "call_sites": 23,
+      "indirect_sites": 15,
+      "findings": {
+        "AG004": 1,
+        "AG006": 3
+      },
+      "seconds": 14.18
+    },
+    {
+      "repo": "openai/swarm",
+      "commit": "6af0b4caf37dca4526dfd98e9fbd8ce36e7eeb22",
+      "files": 58,
+      "lines": 3434,
+      "parse_errors": 0,
+      "call_sites": 35,
+      "indirect_sites": 30,
+      "findings": {
+        "AG002": 2,
+        "AG004": 6
+      },
+      "seconds": 0.5
+    },
+    {
+      "repo": "stanfordnlp/dspy",
+      "commit": "f1260ff14610286cb295c7d3a5ee2cbfd0ba5cb9",
+      "files": 260,
+      "lines": 73309,
+      "parse_errors": 0,
+      "call_sites": 4,
+      "indirect_sites": 1,
+      "findings": {},
+      "seconds": 7.02
+    },
+    {
+      "repo": "yoheinakajima/babyagi",
+      "commit": "fa8930ebe72a82e5ad57b356e7cbec96290e5bb2",
+      "files": 41,
+      "lines": 6153,
+      "parse_errors": 1,
+      "call_sites": 18,
+      "indirect_sites": 5,
+      "findings": {
+        "AG001": 1,
+        "AG002": 1,
+        "AG003": 1,
+        "AG004": 2,
+        "AG006": 12
+      },
+      "seconds": 0.53
+    }
+  ]
+}

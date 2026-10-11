@@ -1,0 +1,1134 @@
+{
+  "model": "llama3.2",
+  "turns": 40,
+  "runs": [
+    {
+      "config": {
+        "max_tokens": 64,
+        "topic": "a lighthouse keeper"
+      },
+      "varied": false,
+      "calibration": {
+        "system": 35,
+        "input": 23,
+        "output": 64
+      },
+      "outputs": [
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64,
+        64
+      ],
+      "rows": [
+        {
+          "turns": 1,
+          "measured_input": 58,
+          "predicted_input": 58,
+          "naive_input": 58,
+          "error_pct": 0.0,
+          "naive_error_pct": 0.0
+        },
+        {
+          "turns": 2,
+          "measured_input": 203,
+          "predicted_input": 203,
+          "naive_input": 116,
+          "error_pct": 0.0,
+          "naive_error_pct": -42.86
+        },
+        {
+          "turns": 3,
+          "measured_input": 435,
+          "predicted_input": 435,
+          "naive_input": 174,
+          "error_pct": 0.0,
+          "naive_error_pct": -60.0
+        },
+        {
+          "turns": 4,
+          "measured_input": 754,
+          "predicted_input": 754,
+          "naive_input": 232,
+          "error_pct": 0.0,
+          "naive_error_pct": -69.23
+        },
+        {
+          "turns": 5,
+          "measured_input": 1160,
+          "predicted_input": 1160,
+          "naive_input": 290,
+          "error_pct": 0.0,
+          "naive_error_pct": -75.0
+        },
+        {
+          "turns": 6,
+          "measured_input": 1653,
+          "predicted_input": 1653,
+          "naive_input": 348,
+          "error_pct": 0.0,
+          "naive_error_pct": -78.95
+        },
+        {
+          "turns": 7,
+          "measured_input": 2233,
+          "predicted_input": 2233,
+          "naive_input": 406,
+          "error_pct": 0.0,
+          "naive_error_pct": -81.82
+        },
+        {
+          "turns": 8,
+          "measured_input": 2900,
+          "predicted_input": 2900,
+          "naive_input": 464,
+          "error_pct": 0.0,
+          "naive_error_pct": -84.0
+        },
+        {
+          "turns": 9,
+          "measured_input": 3654,
+          "predicted_input": 3654,
+          "naive_input": 522,
+          "error_pct": 0.0,
+          "naive_error_pct": -85.71
+        },
+        {
+          "turns": 10,
+          "measured_input": 4495,
+          "predicted_input": 4495,
+          "naive_input": 580,
+          "error_pct": 0.0,
+          "naive_error_pct": -87.1
+        },
+        {
+          "turns": 11,
+          "measured_input": 5423,
+          "predicted_input": 5423,
+          "naive_input": 638,
+          "error_pct": 0.0,
+          "naive_error_pct": -88.24
+        },
+        {
+          "turns": 12,
+          "measured_input": 6438,
+          "predicted_input": 6438,
+          "naive_input": 696,
+          "error_pct": 0.0,
+          "naive_error_pct": -89.19
+        },
+        {
+          "turns": 13,
+          "measured_input": 7540,
+          "predicted_input": 7540,
+          "naive_input": 754,
+          "error_pct": 0.0,
+          "naive_error_pct": -90.0
+        },
+        {
+          "turns": 14,
+          "measured_input": 8729,
+          "predicted_input": 8729,
+          "naive_input": 812,
+          "error_pct": 0.0,
+          "naive_error_pct": -90.7
+        },
+        {
+          "turns": 15,
+          "measured_input": 10005,
+          "predicted_input": 10005,
+          "naive_input": 870,
+          "error_pct": 0.0,
+          "naive_error_pct": -91.3
+        },
+        {
+          "turns": 16,
+          "measured_input": 11368,
+          "predicted_input": 11368,
+          "naive_input": 928,
+          "error_pct": 0.0,
+          "naive_error_pct": -91.84
+        },
+        {
+          "turns": 17,
+          "measured_input": 12818,
+          "predicted_input": 12818,
+          "naive_input": 986,
+          "error_pct": 0.0,
+          "naive_error_pct": -92.31
+        },
+        {
+          "turns": 18,
+          "measured_input": 14355,
+          "predicted_input": 14355,
+          "naive_input": 1044,
+          "error_pct": 0.0,
+          "naive_error_pct": -92.73
+        },
+        {
+          "turns": 19,
+          "measured_input": 15979,
+          "predicted_input": 15979,
+          "naive_input": 1102,
+          "error_pct": 0.0,
+          "naive_error_pct": -93.1
+        },
+        {
+          "turns": 20,
+          "measured_input": 17690,
+          "predicted_input": 17690,
+          "naive_input": 1160,
+          "error_pct": 0.0,
+          "naive_error_pct": -93.44
+        },
+        {
+          "turns": 21,
+          "measured_input": 19488,
+          "predicted_input": 19488,
+          "naive_input": 1218,
+          "error_pct": 0.0,
+          "naive_error_pct": -93.75
+        },
+        {
+          "turns": 22,
+          "measured_input": 21373,
+          "predicted_input": 21373,
+          "naive_input": 1276,
+          "error_pct": 0.0,
+          "naive_error_pct": -94.03
+        },
+        {
+          "turns": 23,
+          "measured_input": 23345,
+          "predicted_input": 23345,
+          "naive_input": 1334,
+          "error_pct": 0.0,
+          "naive_error_pct": -94.29
+        },
+        {
+          "turns": 24,
+          "measured_input": 25404,
+          "predicted_input": 25404,
+          "naive_input": 1392,
+          "error_pct": 0.0,
+          "naive_error_pct": -94.52
+        },
+        {
+          "turns": 25,
+          "measured_input": 27550,
+          "predicted_input": 27550,
+          "naive_input": 1450,
+          "error_pct": 0.0,
+          "naive_error_pct": -94.74
+        },
+        {
+          "turns": 26,
+          "measured_input": 29783,
+          "predicted_input": 29783,
+          "naive_input": 1508,
+          "error_pct": 0.0,
+          "naive_error_pct": -94.94
+        },
+        {
+          "turns": 27,
+          "measured_input": 32103,
+          "predicted_input": 32103,
+          "naive_input": 1566,
+          "error_pct": 0.0,
+          "naive_error_pct": -95.12
+        },
+        {
+          "turns": 28,
+          "measured_input": 34510,
+          "predicted_input": 34510,
+          "naive_input": 1624,
+          "error_pct": 0.0,
+          "naive_error_pct": -95.29
+        },
+        {
+          "turns": 29,
+          "measured_input": 37004,
+          "predicted_input": 37004,
+          "naive_input": 1682,
+          "error_pct": 0.0,
+          "naive_error_pct": -95.45
+        },
+        {
+          "turns": 30,
+          "measured_input": 39585,
+          "predicted_input": 39585,
+          "naive_input": 1740,
+          "error_pct": 0.0,
+          "naive_error_pct": -95.6
+        },
+        {
+          "turns": 31,
+          "measured_input": 42253,
+          "predicted_input": 42253,
+          "naive_input": 1798,
+          "error_pct": 0.0,
+          "naive_error_pct": -95.74
+        },
+        {
+          "turns": 32,
+          "measured_input": 45008,
+          "predicted_input": 45008,
+          "naive_input": 1856,
+          "error_pct": 0.0,
+          "naive_error_pct": -95.88
+        },
+        {
+          "turns": 33,
+          "measured_input": 47850,
+          "predicted_input": 47850,
+          "naive_input": 1914,
+          "error_pct": 0.0,
+          "naive_error_pct": -96.0
+        },
+        {
+          "turns": 34,
+          "measured_input": 50779,
+          "predicted_input": 50779,
+          "naive_input": 1972,
+          "error_pct": 0.0,
+          "naive_error_pct": -96.12
+        },
+        {
+          "turns": 35,
+          "measured_input": 53795,
+          "predicted_input": 53795,
+          "naive_input": 2030,
+          "error_pct": 0.0,
+          "naive_error_pct": -96.23
+        },
+        {
+          "turns": 36,
+          "measured_input": 56898,
+          "predicted_input": 56898,
+          "naive_input": 2088,
+          "error_pct": 0.0,
+          "naive_error_pct": -96.33
+        },
+        {
+          "turns": 37,
+          "measured_input": 60088,
+          "predicted_input": 60088,
+          "naive_input": 2146,
+          "error_pct": 0.0,
+          "naive_error_pct": -96.43
+        },
+        {
+          "turns": 38,
+          "measured_input": 63365,
+          "predicted_input": 63365,
+          "naive_input": 2204,
+          "error_pct": 0.0,
+          "naive_error_pct": -96.52
+        },
+        {
+          "turns": 39,
+          "measured_input": 66729,
+          "predicted_input": 66729,
+          "naive_input": 2262,
+          "error_pct": 0.0,
+          "naive_error_pct": -96.61
+        },
+        {
+          "turns": 40,
+          "measured_input": 70180,
+          "predicted_input": 70180,
+          "naive_input": 2320,
+          "error_pct": 0.0,
+          "naive_error_pct": -96.69
+        }
+      ]
+    },
+    {
+      "config": {
+        "max_tokens": 128,
+        "topic": "a robot learning to paint"
+      },
+      "varied": false,
+      "calibration": {
+        "system": 35,
+        "input": 24,
+        "output": 128
+      },
+      "outputs": [
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128,
+        128
+      ],
+      "rows": [
+        {
+          "turns": 1,
+          "measured_input": 59,
+          "predicted_input": 59,
+          "naive_input": 59,
+          "error_pct": 0.0,
+          "naive_error_pct": 0.0
+        },
+        {
+          "turns": 2,
+          "measured_input": 270,
+          "predicted_input": 270,
+          "naive_input": 118,
+          "error_pct": 0.0,
+          "naive_error_pct": -56.3
+        },
+        {
+          "turns": 3,
+          "measured_input": 633,
+          "predicted_input": 633,
+          "naive_input": 177,
+          "error_pct": 0.0,
+          "naive_error_pct": -72.04
+        },
+        {
+          "turns": 4,
+          "measured_input": 1148,
+          "predicted_input": 1148,
+          "naive_input": 236,
+          "error_pct": 0.0,
+          "naive_error_pct": -79.44
+        },
+        {
+          "turns": 5,
+          "measured_input": 1815,
+          "predicted_input": 1815,
+          "naive_input": 295,
+          "error_pct": 0.0,
+          "naive_error_pct": -83.75
+        },
+        {
+          "turns": 6,
+          "measured_input": 2634,
+          "predicted_input": 2634,
+          "naive_input": 354,
+          "error_pct": 0.0,
+          "naive_error_pct": -86.56
+        },
+        {
+          "turns": 7,
+          "measured_input": 3605,
+          "predicted_input": 3605,
+          "naive_input": 413,
+          "error_pct": 0.0,
+          "naive_error_pct": -88.54
+        },
+        {
+          "turns": 8,
+          "measured_input": 4728,
+          "predicted_input": 4728,
+          "naive_input": 472,
+          "error_pct": 0.0,
+          "naive_error_pct": -90.02
+        },
+        {
+          "turns": 9,
+          "measured_input": 6003,
+          "predicted_input": 6003,
+          "naive_input": 531,
+          "error_pct": 0.0,
+          "naive_error_pct": -91.15
+        },
+        {
+          "turns": 10,
+          "measured_input": 7430,
+          "predicted_input": 7430,
+          "naive_input": 590,
+          "error_pct": 0.0,
+          "naive_error_pct": -92.06
+        },
+        {
+          "turns": 11,
+          "measured_input": 9009,
+          "predicted_input": 9009,
+          "naive_input": 649,
+          "error_pct": 0.0,
+          "naive_error_pct": -92.8
+        },
+        {
+          "turns": 12,
+          "measured_input": 10740,
+          "predicted_input": 10740,
+          "naive_input": 708,
+          "error_pct": 0.0,
+          "naive_error_pct": -93.41
+        },
+        {
+          "turns": 13,
+          "measured_input": 12623,
+          "predicted_input": 12623,
+          "naive_input": 767,
+          "error_pct": 0.0,
+          "naive_error_pct": -93.92
+        },
+        {
+          "turns": 14,
+          "measured_input": 14658,
+          "predicted_input": 14658,
+          "naive_input": 826,
+          "error_pct": 0.0,
+          "naive_error_pct": -94.36
+        },
+        {
+          "turns": 15,
+          "measured_input": 16845,
+          "predicted_input": 16845,
+          "naive_input": 885,
+          "error_pct": 0.0,
+          "naive_error_pct": -94.75
+        },
+        {
+          "turns": 16,
+          "measured_input": 19184,
+          "predicted_input": 19184,
+          "naive_input": 944,
+          "error_pct": 0.0,
+          "naive_error_pct": -95.08
+        },
+        {
+          "turns": 17,
+          "measured_input": 21675,
+          "predicted_input": 21675,
+          "naive_input": 1003,
+          "error_pct": 0.0,
+          "naive_error_pct": -95.37
+        },
+        {
+          "turns": 18,
+          "measured_input": 24318,
+          "predicted_input": 24318,
+          "naive_input": 1062,
+          "error_pct": 0.0,
+          "naive_error_pct": -95.63
+        },
+        {
+          "turns": 19,
+          "measured_input": 27113,
+          "predicted_input": 27113,
+          "naive_input": 1121,
+          "error_pct": 0.0,
+          "naive_error_pct": -95.87
+        },
+        {
+          "turns": 20,
+          "measured_input": 30060,
+          "predicted_input": 30060,
+          "naive_input": 1180,
+          "error_pct": 0.0,
+          "naive_error_pct": -96.07
+        },
+        {
+          "turns": 21,
+          "measured_input": 33159,
+          "predicted_input": 33159,
+          "naive_input": 1239,
+          "error_pct": 0.0,
+          "naive_error_pct": -96.26
+        },
+        {
+          "turns": 22,
+          "measured_input": 36410,
+          "predicted_input": 36410,
+          "naive_input": 1298,
+          "error_pct": 0.0,
+          "naive_error_pct": -96.44
+        },
+        {
+          "turns": 23,
+          "measured_input": 39813,
+          "predicted_input": 39813,
+          "naive_input": 1357,
+          "error_pct": 0.0,
+          "naive_error_pct": -96.59
+        },
+        {
+          "turns": 24,
+          "measured_input": 43368,
+          "predicted_input": 43368,
+          "naive_input": 1416,
+          "error_pct": 0.0,
+          "naive_error_pct": -96.73
+        },
+        {
+          "turns": 25,
+          "measured_input": 47075,
+          "predicted_input": 47075,
+          "naive_input": 1475,
+          "error_pct": 0.0,
+          "naive_error_pct": -96.87
+        },
+        {
+          "turns": 26,
+          "measured_input": 50934,
+          "predicted_input": 50934,
+          "naive_input": 1534,
+          "error_pct": 0.0,
+          "naive_error_pct": -96.99
+        },
+        {
+          "turns": 27,
+          "measured_input": 54945,
+          "predicted_input": 54945,
+          "naive_input": 1593,
+          "error_pct": 0.0,
+          "naive_error_pct": -97.1
+        },
+        {
+          "turns": 28,
+          "measured_input": 59108,
+          "predicted_input": 59108,
+          "naive_input": 1652,
+          "error_pct": 0.0,
+          "naive_error_pct": -97.21
+        },
+        {
+          "turns": 29,
+          "measured_input": 63423,
+          "predicted_input": 63423,
+          "naive_input": 1711,
+          "error_pct": 0.0,
+          "naive_error_pct": -97.3
+        },
+        {
+          "turns": 30,
+          "measured_input": 67890,
+          "predicted_input": 67890,
+          "naive_input": 1770,
+          "error_pct": 0.0,
+          "naive_error_pct": -97.39
+        },
+        {
+          "turns": 31,
+          "measured_input": 72509,
+          "predicted_input": 72509,
+          "naive_input": 1829,
+          "error_pct": 0.0,
+          "naive_error_pct": -97.48
+        },
+        {
+          "turns": 32,
+          "measured_input": 77280,
+          "predicted_input": 77280,
+          "naive_input": 1888,
+          "error_pct": 0.0,
+          "naive_error_pct": -97.56
+        },
+        {
+          "turns": 33,
+          "measured_input": 82203,
+          "predicted_input": 82203,
+          "naive_input": 1947,
+          "error_pct": 0.0,
+          "naive_error_pct": -97.63
+        },
+        {
+          "turns": 34,
+          "measured_input": 87278,
+          "predicted_input": 87278,
+          "naive_input": 2006,
+          "error_pct": 0.0,
+          "naive_error_pct": -97.7
+        },
+        {
+          "turns": 35,
+          "measured_input": 92505,
+          "predicted_input": 92505,
+          "naive_input": 2065,
+          "error_pct": 0.0,
+          "naive_error_pct": -97.77
+        },
+        {
+          "turns": 36,
+          "measured_input": 97884,
+          "predicted_input": 97884,
+          "naive_input": 2124,
+          "error_pct": 0.0,
+          "naive_error_pct": -97.83
+        },
+        {
+          "turns": 37,
+          "measured_input": 103415,
+          "predicted_input": 103415,
+          "naive_input": 2183,
+          "error_pct": 0.0,
+          "naive_error_pct": -97.89
+        },
+        {
+          "turns": 38,
+          "measured_input": 109098,
+          "predicted_input": 109098,
+          "naive_input": 2242,
+          "error_pct": 0.0,
+          "naive_error_pct": -97.94
+        },
+        {
+          "turns": 39,
+          "measured_input": 114933,
+          "predicted_input": 114933,
+          "naive_input": 2301,
+          "error_pct": 0.0,
+          "naive_error_pct": -98.0
+        },
+        {
+          "turns": 40,
+          "measured_input": 120920,
+          "predicted_input": 120920,
+          "naive_input": 2360,
+          "error_pct": 0.0,
+          "naive_error_pct": -98.05
+        }
+      ]
+    },
+    {
+      "config": {
+        "max_tokens": 400,
+        "topic": "a night market"
+      },
+      "varied": true,
+      "calibration": {
+        "system": 23,
+        "input": 34,
+        "output": 228
+      },
+      "outputs": [
+        56,
+        400,
+        400,
+        400,
+        121,
+        43,
+        388,
+        365,
+        400,
+        121,
+        65,
+        400,
+        390,
+        400,
+        97,
+        73,
+        369,
+        400,
+        400,
+        96,
+        85,
+        400,
+        337,
+        400,
+        96,
+        69,
+        400,
+        349,
+        400,
+        96,
+        74,
+        351,
+        400,
+        400,
+        96,
+        75,
+        400,
+        398,
+        400,
+        96
+      ],
+      "rows": [
+        {
+          "turns": 1,
+          "measured_input": 57,
+          "predicted_input": 57,
+          "naive_input": 57,
+          "error_pct": 0.0,
+          "naive_error_pct": 0.0
+        },
+        {
+          "turns": 2,
+          "measured_input": 204,
+          "predicted_input": 376,
+          "naive_input": 114,
+          "error_pct": 84.31,
+          "naive_error_pct": -44.12
+        },
+        {
+          "turns": 3,
+          "measured_input": 770,
+          "predicted_input": 957,
+          "naive_input": 171,
+          "error_pct": 24.29,
+          "naive_error_pct": -77.79
+        },
+        {
+          "turns": 4,
+          "measured_input": 1770,
+          "predicted_input": 1800,
+          "naive_input": 228,
+          "error_pct": 1.69,
+          "naive_error_pct": -87.12
+        },
+        {
+          "turns": 5,
+          "measured_input": 3203,
+          "predicted_input": 2905,
+          "naive_input": 285,
+          "error_pct": -9.3,
+          "naive_error_pct": -91.1
+        },
+        {
+          "turns": 6,
+          "measured_input": 4778,
+          "predicted_input": 4272,
+          "naive_input": 342,
+          "error_pct": -10.59,
+          "naive_error_pct": -92.84
+        },
+        {
+          "turns": 7,
+          "measured_input": 6430,
+          "predicted_input": 5901,
+          "naive_input": 399,
+          "error_pct": -8.23,
+          "naive_error_pct": -93.79
+        },
+        {
+          "turns": 8,
+          "measured_input": 8488,
+          "predicted_input": 7792,
+          "naive_input": 456,
+          "error_pct": -8.2,
+          "naive_error_pct": -94.63
+        },
+        {
+          "turns": 9,
+          "measured_input": 10944,
+          "predicted_input": 9945,
+          "naive_input": 513,
+          "error_pct": -9.13,
+          "naive_error_pct": -95.31
+        },
+        {
+          "turns": 10,
+          "measured_input": 13833,
+          "predicted_input": 12360,
+          "naive_input": 570,
+          "error_pct": -10.65,
+          "naive_error_pct": -95.88
+        },
+        {
+          "turns": 11,
+          "measured_input": 16864,
+          "predicted_input": 15037,
+          "naive_input": 627,
+          "error_pct": -10.83,
+          "naive_error_pct": -96.28
+        },
+        {
+          "turns": 12,
+          "measured_input": 19994,
+          "predicted_input": 17976,
+          "naive_input": 684,
+          "error_pct": -10.09,
+          "naive_error_pct": -96.58
+        },
+        {
+          "turns": 13,
+          "measured_input": 23543,
+          "predicted_input": 21177,
+          "naive_input": 741,
+          "error_pct": -10.05,
+          "naive_error_pct": -96.85
+        },
+        {
+          "turns": 14,
+          "measured_input": 27515,
+          "predicted_input": 24640,
+          "naive_input": 798,
+          "error_pct": -10.45,
+          "naive_error_pct": -97.1
+        },
+        {
+          "turns": 15,
+          "measured_input": 31920,
+          "predicted_input": 28365,
+          "naive_input": 855,
+          "error_pct": -11.14,
+          "naive_error_pct": -97.32
+        },
+        {
+          "turns": 16,
+          "measured_input": 36443,
+          "predicted_input": 32352,
+          "naive_input": 912,
+          "error_pct": -11.23,
+          "naive_error_pct": -97.5
+        },
+        {
+          "turns": 17,
+          "measured_input": 41073,
+          "predicted_input": 36601,
+          "naive_input": 969,
+          "error_pct": -10.89,
+          "naive_error_pct": -97.64
+        },
+        {
+          "turns": 18,
+          "measured_input": 46090,
+          "predicted_input": 41112,
+          "naive_input": 1026,
+          "error_pct": -10.8,
+          "naive_error_pct": -97.77
+        },
+        {
+          "turns": 19,
+          "measured_input": 51541,
+          "predicted_input": 45885,
+          "naive_input": 1083,
+          "error_pct": -10.97,
+          "naive_error_pct": -97.9
+        },
+        {
+          "turns": 20,
+          "measured_input": 57425,
+          "predicted_input": 50920,
+          "naive_input": 1140,
+          "error_pct": -11.33,
+          "naive_error_pct": -98.01
+        },
+        {
+          "turns": 21,
+          "measured_input": 63426,
+          "predicted_input": 56217,
+          "naive_input": 1197,
+          "error_pct": -11.37,
+          "naive_error_pct": -98.11
+        },
+        {
+          "turns": 22,
+          "measured_input": 69546,
+          "predicted_input": 61776,
+          "naive_input": 1254,
+          "error_pct": -11.17,
+          "naive_error_pct": -98.2
+        },
+        {
+          "turns": 23,
+          "measured_input": 76085,
+          "predicted_input": 67597,
+          "naive_input": 1311,
+          "error_pct": -11.16,
+          "naive_error_pct": -98.28
+        },
+        {
+          "turns": 24,
+          "measured_input": 82994,
+          "predicted_input": 73680,
+          "naive_input": 1368,
+          "error_pct": -11.22,
+          "naive_error_pct": -98.35
+        },
+        {
+          "turns": 25,
+          "measured_input": 90336,
+          "predicted_input": 80025,
+          "naive_input": 1425,
+          "error_pct": -11.41,
+          "naive_error_pct": -98.42
+        },
+        {
+          "turns": 26,
+          "measured_input": 97795,
+          "predicted_input": 86632,
+          "naive_input": 1482,
+          "error_pct": -11.41,
+          "naive_error_pct": -98.48
+        },
+        {
+          "turns": 27,
+          "measured_input": 105357,
+          "predicted_input": 93501,
+          "naive_input": 1539,
+          "error_pct": -11.25,
+          "naive_error_pct": -98.54
+        },
+        {
+          "turns": 28,
+          "measured_input": 113338,
+          "predicted_input": 100632,
+          "naive_input": 1596,
+          "error_pct": -11.21,
+          "naive_error_pct": -98.59
+        },
+        {
+          "turns": 29,
+          "measured_input": 121701,
+          "predicted_input": 108025,
+          "naive_input": 1653,
+          "error_pct": -11.24,
+          "naive_error_pct": -98.64
+        },
+        {
+          "turns": 30,
+          "measured_input": 130497,
+          "predicted_input": 115680,
+          "naive_input": 1710,
+          "error_pct": -11.35,
+          "naive_error_pct": -98.69
+        },
+        {
+          "turns": 31,
+          "measured_input": 139410,
+          "predicted_input": 123597,
+          "naive_input": 1767,
+          "error_pct": -11.34,
+          "naive_error_pct": -98.73
+        },
+        {
+          "turns": 32,
+          "measured_input": 148431,
+          "predicted_input": 131776,
+          "naive_input": 1824,
+          "error_pct": -11.22,
+          "naive_error_pct": -98.77
+        },
+        {
+          "turns": 33,
+          "measured_input": 157821,
+          "predicted_input": 140217,
+          "naive_input": 1881,
+          "error_pct": -11.15,
+          "naive_error_pct": -98.81
+        },
+        {
+          "turns": 34,
+          "measured_input": 167645,
+          "predicted_input": 148920,
+          "naive_input": 1938,
+          "error_pct": -11.17,
+          "naive_error_pct": -98.84
+        },
+        {
+          "turns": 35,
+          "measured_input": 177902,
+          "predicted_input": 157885,
+          "naive_input": 1995,
+          "error_pct": -11.25,
+          "naive_error_pct": -98.88
+        },
+        {
+          "turns": 36,
+          "measured_input": 188276,
+          "predicted_input": 167112,
+          "naive_input": 2052,
+          "error_pct": -11.24,
+          "naive_error_pct": -98.91
+        },
+        {
+          "turns": 37,
+          "measured_input": 198759,
+          "predicted_input": 176601,
+          "naive_input": 2109,
+          "error_pct": -11.15,
+          "naive_error_pct": -98.94
+        },
+        {
+          "turns": 38,
+          "measured_input": 209661,
+          "predicted_input": 186352,
+          "naive_input": 2166,
+          "error_pct": -11.12,
+          "naive_error_pct": -98.97
+        },
+        {
+          "turns": 39,
+          "measured_input": 220994,
+          "predicted_input": 196365,
+          "naive_input": 2223,
+          "error_pct": -11.14,
+          "naive_error_pct": -98.99
+        },
+        {
+          "turns": 40,
+          "measured_input": 232760,
+          "predicted_input": 206640,
+          "naive_input": 2280,
+          "error_pct": -11.22,
+          "naive_error_pct": -99.02
+        }
+      ]
+    }
+  ]
+}

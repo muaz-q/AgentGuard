@@ -12,7 +12,7 @@
       "findings": {
         "AG006": 6
       },
-      "seconds": 18.32
+      "seconds": 6.23
     },
     {
       "repo": "qodo-ai/pr-agent",
@@ -25,7 +25,7 @@
       "findings": {
         "AG006": 1
       },
-      "seconds": 10.3
+      "seconds": 4.24
     },
     {
       "repo": "mem0ai/mem0",
@@ -39,26 +39,26 @@
         "AG004": 1,
         "AG006": 2
       },
-      "seconds": 18.08
+      "seconds": 6.73
     },
     {
       "repo": "camel-ai/camel",
       "commit": "24fde60ad739b4be8f8f533fea9ba54256fbc4a2",
-      "files": 858,
-      "lines": 206269,
+      "files": 853,
+      "lines": 205221,
       "parse_errors": 0,
       "call_sites": 30,
       "indirect_sites": 16,
       "findings": {
         "AG006": 1
       },
-      "seconds": 50.28
+      "seconds": 12.04
     },
     {
       "repo": "Significant-Gravitas/AutoGPT",
       "commit": "4473fbbcb1951471df0a05374d47c93c4e39bea6",
-      "files": 1348,
-      "lines": 389705,
+      "files": 1334,
+      "lines": 386154,
       "parse_errors": 0,
       "call_sites": 157,
       "indirect_sites": 131,
@@ -68,7 +68,7 @@
         "AG005": 1,
         "AG006": 2
       },
-      "seconds": 90.73
+      "seconds": 29.08
     },
     {
       "repo": "khoj-ai/khoj",
@@ -85,20 +85,20 @@
         "AG004": 3,
         "AG006": 1
       },
-      "seconds": 11.62
+      "seconds": 3.51
     },
     {
       "repo": "pydantic/pydantic-ai",
       "commit": "69ea1e57201ed59e7d30fbe4a7590d193acecce0",
-      "files": 926,
-      "lines": 274378,
+      "files": 895,
+      "lines": 264034,
       "parse_errors": 0,
       "call_sites": 29,
       "indirect_sites": 17,
       "findings": {
         "AG004": 2
       },
-      "seconds": 64.37
+      "seconds": 22.73
     },
     {
       "repo": "microsoft/TaskWeaver",
@@ -111,7 +111,7 @@
       "findings": {
         "AG006": 1
       },
-      "seconds": 6.24
+      "seconds": 1.49
     }
   ]
 }

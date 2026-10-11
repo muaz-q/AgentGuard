@@ -49,7 +49,7 @@ loop paced by incoming messages (`await websocket.receive_json()`).
 
 **History that grows every iteration and is re-sent on every call.** Turn `k` re-sends all
 `k - 1` earlier turns, so input tokens grow with the square of the number of turns. At 40
-turns the total input is about 30x what a "40 calls x turn-1 size" estimate gives
+turns the measured total input was 30-100x what a "40 calls x turn-1 size" estimate gives
 ([measured](benchmarks.md#cost-model)).
 
 ```python
