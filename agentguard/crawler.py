@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import fnmatch
 import os
 from pathlib import Path
@@ -33,8 +34,18 @@ SKIP_DIRS = {
 MAX_FILES = 20_000
 
 
-def _excluded(rel: str, patterns: Sequence[str]) -> bool:
-    return any(fnmatch.fnmatch(rel, p) or fnmatch.fnmatch(rel, p.rstrip("/") + "/*") for p in patterns)
+def _excluded(path: Path, base: Path, patterns: Sequence[str]) -> bool:
+    """Match against the path relative to the scanned directory and to the working directory,
+    so `exclude = ["bench/*"]` in pyproject.toml works whichever directory is scanned."""
+    rels = {path.relative_to(base).as_posix()}
+    with contextlib.suppress(ValueError):
+        rels.add(path.relative_to(Path.cwd().resolve()).as_posix())
+    return any(fnmatch.fnmatch(r, p) or fnmatch.fnmatch(r, p.rstrip("/") + "/*") for r in rels for p in patterns)
+
+
+def _skip_dir(name: str) -> bool:
+    # Hidden directories (.git, .venv, .tox, ...) are never project source.
+    return name in SKIP_DIRS or name.startswith(".") or name.endswith(".egg-info")
 
 
 def crawl(paths: Iterable[str], exclude: Sequence[str] = ()) -> List[Path]:
@@ -49,19 +60,13 @@ def crawl(paths: Iterable[str], exclude: Sequence[str] = ()) -> List[Path]:
             continue
         base = p.resolve()
         for dirpath, dirnames, filenames in os.walk(base):
-            rel_dir = Path(dirpath).relative_to(base).as_posix()
-            dirnames[:] = sorted(
-                d
-                for d in dirnames
-                if d not in SKIP_DIRS
-                and not d.endswith(".egg-info")
-                and not _excluded(f"{rel_dir}/{d}".lstrip("./"), exclude)
-            )
+            here = Path(dirpath)
+            dirnames[:] = sorted(d for d in dirnames if not _skip_dir(d) and not _excluded(here / d, base, exclude))
             for name in filenames:
                 if not name.endswith(".py"):
                     continue
-                path = Path(dirpath) / name
-                if path.is_symlink() or _excluded(path.relative_to(base).as_posix(), exclude):
+                path = here / name
+                if path.is_symlink() or _excluded(path, base, exclude):
                     continue
                 found.add(path)
                 if len(found) > MAX_FILES:

@@ -1,0 +1,17 @@
+# Use from another repository's .pre-commit-config.yaml:
+#
+#   - repo: https://github.com/muaz-q/agentguard
+#     rev: v0.3.0
+#     hooks:
+#       - id: agentguard
+#
+# The whole project is scanned on every run (not only the staged files), because a call in
+# one file can be made inside a loop in another.
+- id: agentguard
+  name: agentguard
+  description: Find LLM cost risks in Python agent code.
+  entry: agentguard --no-costs
+  language: python
+  types: [python]
+  pass_filenames: false
+  require_serial: true

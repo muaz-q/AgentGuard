@@ -102,3 +102,18 @@ def test_suppress_file(single):
         "# agentguard: ignore-file\nfrom openai import OpenAI\nwhile True:\n    OpenAI().chat.completions.create(model='x', messages=[])\n"
     )
     assert rules(a) == []
+
+
+def test_prompt_built_from_expressions(single):
+    a = single('''
+import textwrap
+import anthropic
+c = anthropic.Anthropic()
+SYSTEM = textwrap.dedent("""
+    You are a careful assistant.
+""") + "Follow the style guide. " * 300
+for i in range(5):
+    c.messages.create(model="claude-opus-5-5", max_tokens=9, system=SYSTEM, messages=[])
+''')
+    assert a.sites[0].system_tokens > 1500
+    assert rules(a) == ["AG007"]

@@ -71,7 +71,18 @@ _WRAPPER_METHODS = {
 _GENERIC_METHODS = {"create", "acreate", "generate", "invoke", "complete", "chat", "completion", "acompletion"}
 _GROW_METHODS = {"append", "extend", "insert", "add_message", "add_messages", "add_user_message", "add_ai_message"}
 _SHRINK_METHODS = {"pop", "popleft", "clear", "remove"}
+_LOOPS_AND_DEFS = (ast.For, ast.AsyncFor, ast.While, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+_PROMPT_CALLS = (
+    "Prompt.ask",
+    "Confirm.ask",
+    "console.input",
+    "session.prompt",
+    "prompt_toolkit.prompt",
+    "questionary.text",
+)
+_RETRY_ITERATORS = {"Retrying", "AsyncRetrying"}
 _TRIM_CALL = re.compile(r"summar|trim|truncat|compact|window|prune|shorten", re.IGNORECASE)
+_LITELLM_CALLS = {"litellm.completion", "litellm.acompletion", "litellm.responses", "litellm.aresponses"}
 _MAX_TOKEN_KWARGS = {"max_tokens", "max_completion_tokens", "max_output_tokens"}
 _LIMIT_WORDS = {
     "max",
@@ -107,7 +118,7 @@ _SUPPRESS_FILE = re.compile(r"#\s*agentguard:\s*ignore-file", re.IGNORECASE)
 @dataclass
 class Loop:
     line: int
-    kind: str  # "fixed" | "capped" | "data" | "unbounded"
+    kind: str  # "fixed" | "capped" | "data" | "interactive" | "unbounded"
     count: Optional[int] = None  # iteration count when it is a known constant
     keyword: str = "for"
 
@@ -210,6 +221,44 @@ class _Module:
     imports: Dict[str, str] = field(default_factory=dict)
     functions: Dict[str, FunctionInfo] = field(default_factory=dict)
     large_strings: Dict[str, int] = field(default_factory=dict)
+    consts: Dict[str, object] = field(default_factory=dict)
+    docstrings: Set[int] = field(default_factory=set)
+    seq_lens: Dict[str, int] = field(default_factory=dict)  # module constants: LANGS = ("en", "ja")
+    indexed: bool = False
+
+    def index(self) -> None:
+        """One walk for what both passes need: constants, large strings, docstring nodes."""
+        if self.indexed or self.tree is None:
+            return
+        self.indexed = True
+        assigned: Dict[str, int] = {}
+        for node in ast.walk(self.tree):
+            if isinstance(node, (ast.Assign, ast.AugAssign, ast.AnnAssign)):
+                for t in node.targets if isinstance(node, ast.Assign) else [node.target]:
+                    if isinstance(t, ast.Name):
+                        assigned[t.id] = assigned.get(t.id, 0) + 1
+        for stmt in self.tree.body:
+            if isinstance(stmt, ast.Assign) and len(stmt.targets) == 1 and isinstance(stmt.targets[0], ast.Name):
+                name, value = stmt.targets[0].id, stmt.value
+                n = len(value.keys) if isinstance(value, ast.Dict) else len(getattr(value, "elts", []))
+                if isinstance(value, (ast.List, ast.Tuple, ast.Set, ast.Dict)) and n and assigned.get(name) == 1:
+                    self.seq_lens[name] = n
+        for node in ast.walk(self.tree):
+            if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+                first = node.body[0] if node.body else None
+                if (
+                    isinstance(first, ast.Expr)
+                    and isinstance(first.value, ast.Constant)
+                    and isinstance(first.value.value, str)
+                ):
+                    self.docstrings.add(id(first.value))
+            elif isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+                name, value = node.targets[0].id, node.value
+                if isinstance(value, ast.Constant) and type(value.value) in (int, str):
+                    self.consts[name] = value.value
+                n = _static_text_len(value)
+                if n >= LARGE_PROMPT_CHARS:
+                    self.large_strings[name] = n // CHARS_PER_TOKEN
 
 
 @dataclass
@@ -271,11 +320,45 @@ def _int_const(node: ast.AST) -> Optional[int]:
 
 
 def _static_text_len(node: ast.AST) -> int:
+    """Length of the static text in a string expression: literals, f-string text,
+    concatenation, repetition, and wrappers such as textwrap.dedent()."""
     if isinstance(node, ast.Constant) and isinstance(node.value, str):
         return len(node.value)
     if isinstance(node, ast.JoinedStr):
         return sum(len(v.value) for v in node.values if isinstance(v, ast.Constant) and isinstance(v.value, str))
+    if isinstance(node, ast.BinOp):
+        if isinstance(node.op, ast.Add):
+            return _static_text_len(node.left) + _static_text_len(node.right)
+        if isinstance(node.op, ast.Mult):
+            for text, count in ((node.left, node.right), (node.right, node.left)):
+                n = _int_const(count)
+                if n is not None and n > 0:
+                    return _static_text_len(text) * n
+    if isinstance(node, ast.Call) and node.args:
+        name = (_dotted(node.func) or "").rsplit(".", 1)[-1]
+        if name in ("dedent", "strip", "lstrip", "rstrip", "cleandoc", "format"):
+            target = node.func.value if name == "format" and isinstance(node.func, ast.Attribute) else node.args[0]
+            return _static_text_len(target)
+    if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr in ("strip", "format"):
+        return _static_text_len(node.func.value)
     return 0
+
+
+def _is_window(value: ast.AST, name: str) -> bool:
+    """``x[-k:]``, ``x[:1] + x[-k:]``, ``[*x[:1], *x[-k:]]``: only slices of x (and literals)."""
+
+    def is_slice(n: ast.AST) -> bool:
+        return isinstance(n, ast.Subscript) and isinstance(n.slice, ast.Slice) and _dotted(n.value) == name
+
+    if is_slice(value):
+        return True
+    if isinstance(value, ast.BinOp) and isinstance(value.op, ast.Add):
+        parts = [value.left, value.right]
+    elif isinstance(value, (ast.List, ast.Tuple)):
+        parts = [e.value if isinstance(e, ast.Starred) else e for e in value.elts]
+    else:
+        return False
+    return all(is_slice(p) or _is_window(p, name) or name not in _refs(p) for p in parts)
 
 
 def _words(name: str) -> List[str]:
@@ -314,21 +397,6 @@ def _is_constructor(dotted: str) -> bool:
     return "Error" not in last and "Exception" not in last
 
 
-def _docstring_nodes(tree: ast.AST) -> Set[int]:
-    ids = set()
-    for node in ast.walk(tree):
-        if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
-            body = node.body
-            first = body[0] if body else None
-            if (
-                isinstance(first, ast.Expr)
-                and isinstance(first.value, ast.Constant)
-                and isinstance(first.value.value, str)
-            ):
-                ids.add(id(first.value))
-    return ids
-
-
 # ─── The visitor ──────────────────────────────────────────────────────────────
 
 # resolve(ref, cls) -> (function key, info) when ``ref`` called from class ``cls`` is an LLM function.
@@ -341,8 +409,9 @@ class _Visitor(ast.NodeVisitor):
     ):
         self.mod = mod
         self.resolve = resolve
-        self.consts: Dict[str, object] = {}
-        self.large_strings: Dict[str, int] = dict(imported_strings or {})
+        mod.index()
+        self.consts: Dict[str, object] = mod.consts
+        self.large_strings: Dict[str, int] = {**mod.large_strings, **(imported_strings or {})}
         self.clients: Dict[str, _Client] = {}
         self.instances: Dict[str, str] = {}  # variable -> class name it was built from
         self.imports: Dict[str, str] = {}
@@ -353,30 +422,21 @@ class _Visitor(ast.NodeVisitor):
         self._frames: List[_Frame] = []
         self._uses_cache = "cache_control" in mod.source
         assert mod.tree is not None
-        self._docstrings = _docstring_nodes(mod.tree)
-        self._prepass(mod.tree)
+        self._docstrings = mod.docstrings
         self._module_fn = FunctionInfo(
             key=f"{mod.module}:<module>", name="<module>", cls=None, path=mod.path, line=1, params=[]
         )
 
-    # Constants and large prompt strings, wherever they are assigned.
-    def _prepass(self, tree: ast.AST) -> None:
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
-                name, value = node.targets[0].id, node.value
-                if (
-                    isinstance(value, ast.Constant)
-                    and isinstance(value.value, (int, str))
-                    and type(value.value) is not bool
-                ):
-                    self.consts[name] = value.value
-                n = _static_text_len(value)
-                if n >= LARGE_PROMPT_CHARS:
-                    self.large_strings[name] = n // CHARS_PER_TOKEN
-
     @property
     def _fn(self) -> FunctionInfo:
         return self._fn_stack[-1] if self._fn_stack else self._module_fn
+
+    # Leaves: nothing below them to visit.
+    def visit_Constant(self, node: ast.Constant) -> None:
+        pass
+
+    def visit_Name(self, node: ast.Name) -> None:
+        pass
 
     # ── imports ──
     def _absolute(self, module: Optional[str], level: int) -> str:
@@ -489,8 +549,8 @@ class _Visitor(ast.NodeVisitor):
     def _note_assignment(self, name: str, value: ast.AST) -> None:
         used = _refs(value)
         if name in used:
-            if isinstance(value, ast.Subscript) and _dotted(value.value) == name:
-                self._trim(name)  # x = x[-k:]
+            if _is_window(value, name):
+                self._trim(name)  # x = x[-k:], x = x[:1] + x[-k:]
             elif isinstance(value, ast.Call) and _TRIM_CALL.search(_dotted(value.func) or ""):
                 self._trim(name)  # x = summarize(x)
             else:
@@ -578,26 +638,74 @@ class _Visitor(ast.NodeVisitor):
         return False, None
 
     def _capped_by_break(self, body: Sequence[ast.stmt]) -> Tuple[bool, Optional[int]]:
-        """Is there an `if <counter check>: break/return/raise` in this loop body?"""
+        """Does a counter check in this loop body stop the loop, or stop the calls in it?
+
+        Recognised: `if <cap>: break/return/raise/continue`, a countdown (`n -= 1` ...
+        `if n <= 0: ...`), and a cap that sets a flag tested elsewhere
+        (`if delay > TIMEOUT: retry = False` ... `if not retry: return`).
+        """
+        ifs: List[ast.If] = []
+        countdown: Set[str] = set()
         stack = list(body)
         while stack:
             stmt = stack.pop()
-            if isinstance(
-                stmt, (ast.For, ast.AsyncFor, ast.While, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
-            ):
+            if isinstance(stmt, _LOOPS_AND_DEFS):
                 continue
-            if isinstance(stmt, ast.If):
-                ok, val = self._cap(stmt.test)
-                exits = any(isinstance(s, (ast.Break, ast.Return, ast.Raise)) for s in stmt.body)
-                if ok and exits:
-                    return True, val
+            if isinstance(stmt, ast.AugAssign) and isinstance(stmt.op, ast.Sub):
+                d = _dotted(stmt.target)
+                if d:
+                    countdown.add(d)
+            elif isinstance(stmt, ast.If):
+                ifs.append(stmt)
                 stack.extend(stmt.body)
                 stack.extend(stmt.orelse)
             elif isinstance(stmt, (ast.With, ast.AsyncWith, ast.Try)):
                 stack.extend(stmt.body)
                 for h in getattr(stmt, "handlers", []):
                     stack.extend(h.body)
+                stack.extend(getattr(stmt, "orelse", []))
+
+        def exits(stmts: Sequence[ast.stmt]) -> bool:
+            return any(isinstance(x, (ast.Break, ast.Return, ast.Raise, ast.Continue)) for x in stmts)
+
+        flags: Set[str] = set()
+        for node in ifs:
+            ok, val = self._cap(node.test)
+            if not ok and self._countdown_check(node.test, countdown):
+                ok, val = True, None
+            if not ok:
+                continue
+            if exits(node.body):
+                return True, val
+            for x in node.body:
+                if isinstance(x, ast.Assign):
+                    flags |= {d for t in x.targets if (d := _dotted(t))}
+        for node in ifs:
+            if exits(node.body) and _refs(node.test) & flags:
+                return True, None
         return False, None
+
+    def _countdown_check(self, test: ast.AST, countdown: Set[str]) -> bool:
+        for node in ast.walk(test):
+            if isinstance(node, ast.Compare):
+                sides = [node.left, *node.comparators]
+                if any(_dotted(x) in countdown for x in sides) and any(_int_const(x) is not None for x in sides):
+                    return True
+        return False
+
+    def _interactive(self, body: Sequence[ast.stmt]) -> bool:
+        """Does each iteration wait for a person (input(), a prompt)? Then it is human-paced."""
+        stack: List[ast.AST] = list(body)
+        while stack:
+            node = stack.pop()
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+                continue
+            if isinstance(node, ast.Call):
+                d = _dotted(node.func) or ""
+                if d in ("input", "raw_input") or d.endswith(_PROMPT_CALLS):
+                    return True
+            stack.extend(ast.iter_child_nodes(node))
+        return False
 
     def _for_loop(self, iterable: ast.AST, line: int, keyword: str) -> Loop:
         if isinstance(iterable, ast.Call):
@@ -606,6 +714,8 @@ class _Visitor(ast.NodeVisitor):
                 name.endswith("repeat") and len(iterable.args) > 1
             ):
                 return Loop(line, "unbounded", keyword=keyword)
+            if name.rsplit(".", 1)[-1] in _RETRY_ITERATORS:  # tenacity: one attempt per iteration
+                return Loop(line, "capped", keyword="retry")
             if name == "range":
                 vals = [self._limit(a)[1] if _int_const(a) is None else _int_const(a) for a in iterable.args]
                 if vals and all(v is not None for v in vals):
@@ -613,6 +723,8 @@ class _Visitor(ast.NodeVisitor):
                 return Loop(line, "capped", keyword=keyword)
         if isinstance(iterable, (ast.List, ast.Tuple, ast.Set)):
             return Loop(line, "fixed", len(iterable.elts), keyword)
+        if isinstance(iterable, ast.Name) and iterable.id in self.mod.seq_lens:
+            return Loop(line, "fixed", self.mod.seq_lens[iterable.id], keyword)
         return Loop(line, "data", keyword=keyword)
 
     def _run_loop(self, loop: Loop, body: Sequence[ast.AST]) -> None:
@@ -629,6 +741,8 @@ class _Visitor(ast.NodeVisitor):
     def visit_For(self, node) -> None:
         self.visit(node.iter)
         loop = self._for_loop(node.iter, node.lineno, "async for" if isinstance(node, ast.AsyncFor) else "for")
+        if loop.kind in ("data", "unbounded") and self._interactive(node.body):
+            loop = Loop(node.lineno, "interactive", keyword=loop.keyword)
         self._run_loop(loop, node.body)
         for stmt in node.orelse:
             self.visit(stmt)
@@ -652,6 +766,8 @@ class _Visitor(ast.NodeVisitor):
                 ok, val = self._capped_by_break(node.body)
             if ok:
                 loop = Loop(node.lineno, "fixed" if val else "capped", val, "while")
+            elif self._interactive(node.body):
+                loop = Loop(node.lineno, "interactive", keyword="while")
             else:
                 loop = Loop(node.lineno, "unbounded", keyword="while")
         self._run_loop(loop, node.body)
@@ -725,7 +841,8 @@ class _Visitor(ast.NodeVisitor):
             return "anthropic.messages", prov("anthropic"), model
         if chain and chain[-1] in ("generate_content", "generate_content_async", "generate_content_stream"):
             return "google.generate_content", "google", model or (receiver.model if receiver else None)
-        if absn in ("litellm.completion", "litellm.acompletion", "litellm.responses", "litellm.aresponses"):
+        written = _dotted(func) or ""
+        if absn in _LITELLM_CALLS or written in _LITELLM_CALLS:  # also `from wrapper import litellm`
             return "litellm", "unknown", model
         if absn in ("ollama.chat", "ollama.generate", "ollama.AsyncClient.chat"):
             return "ollama", "ollama", model
@@ -754,9 +871,12 @@ class _Visitor(ast.NodeVisitor):
         refs: Set[str] = set()
         inline = 0
         for a in [*call.args, *(kw.value for kw in call.keywords)]:
-            refs |= _refs(a)
             for sub in ast.walk(a):
-                if id(sub) not in self._docstrings:
+                if isinstance(sub, (ast.Name, ast.Attribute)):
+                    d = _dotted(sub)
+                    if d:
+                        refs.add(d)
+                elif isinstance(sub, (ast.Constant, ast.JoinedStr)) and id(sub) not in self._docstrings:
                     inline = max(inline, _static_text_len(sub) // CHARS_PER_TOKEN)
         return refs, inline
 
@@ -859,14 +979,21 @@ def analyze_project(files: Sequence[Path], root: Path) -> ProjectAnalysis:
             continue
         v = _Visitor(m)
         v.visit(m.tree)
-        m.imports, m.functions, m.large_strings = v.imports, v.functions, v.large_strings
+        m.imports, m.functions = v.imports, v.functions
         m.functions["<module>"] = v._module_fn
+
+    # The scan root may sit above the package root (e.g. a src/ layout), so a module
+    # can also be found by a unique dotted suffix of its name.
+    by_suffix: Dict[str, List[_Module]] = {}
+    for name, mod in by_name.items():
+        parts = name.split(".")
+        for i in range(1, len(parts)):
+            by_suffix.setdefault(".".join(parts[i:]), []).append(mod)
 
     def find_module(dotted: str) -> Optional[_Module]:
         if dotted in by_name:
             return by_name[dotted]
-        # The scan root may sit above the package root (e.g. a src/ layout).
-        hits = [m for name, m in by_name.items() if name.endswith("." + dotted)]
+        hits = by_suffix.get(dotted, [])
         return hits[0] if len(hits) == 1 else None
 
     def lookup(m: _Module, ref: str, cls: Optional[str]) -> Optional[FunctionInfo]:
@@ -920,6 +1047,9 @@ def analyze_project(files: Sequence[Path], root: Path) -> ProjectAnalysis:
         result = FileResult(m.path, m.module, error=m.error)
         results.append(result)
         if m.tree is None:
+            continue
+        # Only files that call a model, directly or through a function, can have call sites.
+        if not any(f.direct_llm or edges.get(f.key, set()) & llm for f in m.functions.values()):
             continue
 
         def resolve(ref: str, cls: Optional[str], m: _Module = m) -> Optional[Tuple[str, FunctionInfo]]:

@@ -39,3 +39,15 @@ def test_explicit_file(tmp_path):
 def test_missing(tmp_path):
     with pytest.raises(FileNotFoundError):
         crawl([str(tmp_path / "nope")])
+
+
+def test_hidden_directories_are_skipped(tmp_path):
+    write_project(tmp_path, {"a.py": "", ".repos/x/b.py": "", ".hidden.py": ""})
+    assert names(crawl([str(tmp_path)]), tmp_path) == [".hidden.py", "a.py"]
+
+
+def test_exclude_relative_to_working_directory(tmp_path, monkeypatch):
+    write_project(tmp_path, {"bench/run.py": "", "bench/data/x.py": "", "src/a.py": ""})
+    monkeypatch.chdir(tmp_path)
+    # Scanning bench/ directly still honours a project-relative pattern.
+    assert names(crawl(["bench"], exclude=["bench/data"]), tmp_path) == ["bench/run.py"]

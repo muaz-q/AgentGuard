@@ -146,3 +146,32 @@ def main(questions):
     assert loop_site.target.endswith(":Conversation.send")
     assert loop_site.context_growth
     assert {f.rule for f in a.findings} == {"AG002", "AG004"}
+
+
+def test_window_keeping_first_message_is_not_growth(single):
+    a = single(
+        HEAD
+        + """
+messages = []
+while True:
+    messages.append("q")
+    client.chat.completions.create(model="gpt-4o", messages=messages, max_tokens=9)
+    messages = messages[:1] + messages[-8:]
+"""
+    )
+    assert growth(a) == [False]
+
+
+def test_window_with_star_unpacking_is_not_growth(single):
+    a = single(
+        HEAD
+        + """
+def run(qs):
+    messages = []
+    for q in qs:
+        messages.append(q)
+        client.chat.completions.create(model="gpt-4o", messages=messages, max_tokens=9)
+        messages = [*messages[:1], *messages[-8:]]
+"""
+    )
+    assert growth(a) == [False]
