@@ -1,183 +1,216 @@
-#!/usr/bin/env python3
-"""
-AgentGuard CLI — Pre-execution cost estimator for agentic AI systems.
+"""Command-line entry point."""
 
-Usage:
-    agentguard
-    agentguard .
-    agentguard ./my_project
-    agentguard --root_dir ./my_project
-    agentguard --model claude-3-5-sonnet
-    agentguard --json --json_out report.json
-    agentguard --input_tokens 400 --output_min 200 --output_max 800
-"""
+from __future__ import annotations
 
 import argparse
+import io
 import sys
-import time
 from pathlib import Path
+from typing import List, Optional, Sequence
 
+from agentguard import __version__, config
+from agentguard.analyzer import analyze_project
 from agentguard.crawler import crawl
-from agentguard.analyzer import analyze
-from agentguard.simulator import simulate, MODEL_PRICES, DEFAULT_MODEL
-from agentguard.reporter import render
+from agentguard.estimator import Assumptions, estimate
+from agentguard.pricing import DEFAULT_MODEL, PriceTable
+from agentguard.reporter import FORMATS, render, use_color
+from agentguard.rules import RULES, SEVERITY_RANK
+
+EXIT_OK, EXIT_FINDINGS, EXIT_ERROR = 0, 1, 2
+
+
+def _rule_list(text: str) -> List[str]:
+    ids = [x.strip().upper() for x in text.split(",") if x.strip()]
+    bad = [x for x in ids if x not in RULES]
+    if bad:
+        raise argparse.ArgumentTypeError(f"unknown rule(s): {', '.join(bad)} (see --list-rules)")
+    return ids
+
+
+def _token_range(text: str) -> tuple:
+    lo, sep, hi = text.partition(":")
+    try:
+        a, b = int(lo), int(hi if sep else lo)
+    except ValueError:
+        raise argparse.ArgumentTypeError("expected MIN:MAX, e.g. 200:1000") from None
+    if a < 0 or b < a:
+        raise argparse.ArgumentTypeError("expected 0 <= MIN <= MAX")
+    return a, b
+
+
+def _depths(text: str) -> tuple:
+    try:
+        values = tuple(sorted({int(x) for x in text.split(",") if x.strip()}))
+    except ValueError:
+        raise argparse.ArgumentTypeError("expected comma-separated integers, e.g. 1,10,100") from None
+    if not values or values[0] < 1:
+        raise argparse.ArgumentTypeError("depths must be positive integers")
+    return values
 
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="agentguard",
-        description="AgentGuard — Pre-execution cost estimator for agentic AI systems",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  agentguard
-  agentguard .
-  agentguard ./my_agent
-  agentguard --root_dir ./my_agent
-  agentguard --model claude-3-5-sonnet
-  agentguard --json --json_out report.json
-  agentguard --input_tokens 400 --output_min 200 --output_max 800 --dag
-        """,
+        description="Find LLM cost risks in Python agent code - unbounded agent loops, quadratic "
+        "history growth, uncapped outputs - and estimate what a run costs.",
+        epilog="Exit status: 0 no findings at or above --fail-on, 1 findings, 2 error.",
+    )
+    p.add_argument("paths", nargs="*", metavar="PATH", help="files or directories (default: .)")
+    p.add_argument("--version", action="version", version=f"agentguard {__version__}")
+
+    out = p.add_argument_group("output")
+    out.add_argument("-f", "--format", choices=FORMATS, default="text")
+    out.add_argument("-o", "--output", metavar="FILE", help="write the report to FILE instead of stdout")
+    out.add_argument("--no-costs", action="store_true", help="findings only; skip the cost estimate")
+    out.add_argument("--color", dest="color", action="store_true", default=None)
+    out.add_argument("--no-color", dest="color", action="store_false")
+
+    rules = p.add_argument_group("rules")
+    rules.add_argument("--select", type=_rule_list, metavar="IDS", help="only these rules, e.g. AG001,AG002")
+    rules.add_argument("--ignore", type=_rule_list, metavar="IDS", help="skip these rules")
+    rules.add_argument(
+        "--fail-on",
+        choices=["high", "medium", "low", "never"],
+        help="exit 1 if any finding is at least this severe (default: high)",
+    )
+    rules.add_argument("--exclude", action="append", metavar="GLOB", help="skip matching paths (repeatable)")
+
+    cost = p.add_argument_group("cost model")
+    cost.add_argument(
+        "-m", "--model", help=f"price calls whose model is not in the code as this (default: {DEFAULT_MODEL})"
+    )
+    cost.add_argument("--prices", metavar="FILE", help="extra/override prices: AgentGuard or LiteLLM JSON format")
+    cost.add_argument("--system-tokens", type=int, metavar="N", help="static prompt tokens per call (default: 500)")
+    cost.add_argument("--input-tokens", type=int, metavar="N", help="new input tokens per call (default: 500)")
+    cost.add_argument(
+        "--output-tokens", type=_token_range, metavar="MIN:MAX", help="output tokens per call (default: 200:1000)"
+    )
+    cost.add_argument(
+        "--depths",
+        type=_depths,
+        metavar="N,N,...",
+        help="iterations assumed for loops with no constant bound (default: 1,10,100)",
     )
 
-    # ✅ Version support
-    p.add_argument(
-        "--version",
-        action="version",
-        version="agentguard 0.2.3"
-    )
+    info = p.add_argument_group("info")
+    info.add_argument("--list-models", action="store_true", help="print the price table and exit")
+    info.add_argument("--list-rules", action="store_true", help="print the rules and exit")
+    info.add_argument("--config", metavar="FILE", help="pyproject.toml to read [tool.agentguard] from")
+    info.add_argument("--no-config", action="store_true", help="ignore pyproject.toml")
 
-    # ✅ Positional root_dir (clean UX)
-    p.add_argument(
-        "root_dir",
-        nargs="?",
-        default=".",
-        help="Project directory (default: current directory)",
-    )
-
-    # ✅ Backward compatibility flag (DO NOT BREAK EXISTING USERS)
-    p.add_argument(
-        "--root_dir",
-        dest="root_dir_flag",
-        help="Root directory of the project to analyze (overrides positional argument)",
-    )
-
-    p.add_argument(
-        "--model", "-m",
-        default=DEFAULT_MODEL,
-        choices=list(MODEL_PRICES.keys()),
-        help=f"LLM model for pricing (default: {DEFAULT_MODEL})",
-    )
-
-    p.add_argument(
-        "--input_tokens", "-i",
-        type=int,
-        default=1200,
-        help="Assumed input tokens per call (default: 200)",
-    )
-
-    p.add_argument(
-        "--output_min",
-        type=int,
-        default=300,
-        help="Minimum output tokens per call (default: 100)",
-    )
-
-    p.add_argument(
-        "--output_max",
-        type=int,
-        default=3000,
-        help="Maximum output tokens per call (default: 500)",
-    )
-
-    p.add_argument(
-        "--json",
-        action="store_true",
-        help="Output raw JSON instead of human-readable report",
-    )
-
-    p.add_argument(
-        "--json_out",
-        metavar="FILE",
-        help="Save JSON report to file (can be combined with human-readable output)",
-    )
-
-    p.add_argument(
-        "--dag",
-        action="store_true",
-        help="Include Mermaid DAG in output",
-    )
-
-    p.add_argument(
-        "--quiet", "-q",
-        action="store_true",
-        help="Skip per-file details; show summary only",
-    )
-
+    # 0.2.x flags, kept so existing scripts keep working.
+    legacy = p.add_argument_group("deprecated (0.2.x)")
+    legacy.add_argument("--root_dir", help=argparse.SUPPRESS)
+    legacy.add_argument("--json", action="store_true", help=argparse.SUPPRESS)
+    legacy.add_argument("--json_out", help=argparse.SUPPRESS)
+    legacy.add_argument("-q", "--quiet", action="store_true", help=argparse.SUPPRESS)
+    legacy.add_argument("-i", "--input_tokens", dest="input_tokens", type=int, help=argparse.SUPPRESS)
+    legacy.add_argument("--output_min", type=int, help=argparse.SUPPRESS)
+    legacy.add_argument("--output_max", type=int, help=argparse.SUPPRESS)
+    legacy.add_argument("--dag", action="store_true", help=argparse.SUPPRESS)
     return p
 
 
-def main():
-    parser = build_parser()
-    args = parser.parse_args()
+def _utf8_streams() -> None:
+    """Never crash on a narrow console encoding (cp1252 on Windows); emit UTF-8 when piped."""
+    for stream in (sys.stdout, sys.stderr):
+        if isinstance(stream, io.TextIOWrapper):
+            if stream.isatty():
+                stream.reconfigure(errors="replace")
+            else:
+                stream.reconfigure(encoding="utf-8", errors="replace")
 
-    print("RUNNING MODIFIED AGENTGUARD 🚀")
 
-    # ✅ Resolve correct root_dir (flag overrides positional)
-    root_dir_input = args.root_dir_flag if args.root_dir_flag else args.root_dir
-    root = Path(root_dir_input).resolve()
+def _err(msg: str) -> None:
+    print(f"agentguard: {msg}", file=sys.stderr)
 
-    if not root.exists():
-        print(f"Error: Directory '{root_dir_input}' does not exist.", file=sys.stderr)
-        sys.exit(1)
 
-    # ✅ Safe UX message (correctly detects current dir)
-    if Path(root_dir_input).resolve() == Path(".").resolve() and not args.json:
-        print("⚠️  No directory specified. Using current folder.\n")
+def main(argv: Optional[Sequence[str]] = None) -> int:
+    _utf8_streams()
+    args = build_parser().parse_args(argv)
 
-    start = time.time()
+    if args.list_rules:
+        for r in RULES.values():
+            print(f"{r.id}  {r.severity:<6}  {r.name}\n        {r.summary}\n        fix: {r.fix}")
+        return EXIT_OK
 
-    # 1. Crawl
-    if not args.json:
-        print(f"\n🔍  Scanning: {root}", flush=True)
+    paths = list(args.paths) or ([args.root_dir] if args.root_dir else ["."])
+    try:
+        cfg_path = (
+            None if args.no_config else (Path(args.config) if args.config else config.find_pyproject(Path(paths[0])))
+        )
+        cfg = config.load(cfg_path)
+        prices = PriceTable.load(args.prices or cfg.get("prices"))
+    except (OSError, ValueError) as e:
+        _err(str(e))
+        return EXIT_ERROR
 
-    files = crawl(str(root))
+    if args.list_models:
+        print(
+            f"{'model':<24} {'input':>8} {'output':>8} {'cache read':>11}   (USD per 1M tokens, as of {prices.as_of})"
+        )
+        for name, pr in sorted(prices.models.items()):
+            cr = f"{pr.cache_read:.3f}" if pr.cache_read is not None else "-"
+            print(f"{name:<24} {pr.input:>8.3f} {pr.output:>8.3f} {cr:>11}")
+        return EXIT_OK
 
-    if not args.json:
-        print(f"   Found {len(files)} candidate file(s)...", flush=True)
+    # Legacy flag mapping.
+    fmt = "json" if args.json and args.format == "text" else args.format
+    output = args.output or args.json_out
+    if args.dag:
+        _err("--dag was removed in 0.3.0 and is ignored")
+    out_range = args.output_tokens or (_token_range(cfg["output_tokens"]) if "output_tokens" in cfg else None)
+    if out_range is None and (args.output_min is not None or args.output_max is not None):
+        out_range = (args.output_min or 200, args.output_max or max(args.output_min or 200, 1000))
 
-    # 2. Analyze
-    analyses = []
-    for f in files:
-        analysis = analyze(f)
-        analyses.append(analysis)
-    for a in analyses:
-        print(a.path.name, "context_growth =", a.context_growth)
-
-    # 3. Simulate
-    project_cost = simulate(
-        analyses=analyses,
-        model=args.model,
-        input_tokens=args.input_tokens,
-        output_tokens_min=args.output_min,
-        output_tokens_max=args.output_max,
+    defaults = Assumptions()
+    assumptions = Assumptions(
+        system_tokens=args.system_tokens or cfg.get("system_tokens", defaults.system_tokens),
+        input_tokens=args.input_tokens or cfg.get("input_tokens", defaults.input_tokens),
+        output_min=(out_range or (defaults.output_min, 0))[0],
+        output_max=(out_range or (0, defaults.output_max))[1],
+        depths=args.depths or tuple(cfg.get("depths", defaults.depths)),
+        model=args.model or cfg.get("model", DEFAULT_MODEL),
     )
 
-    elapsed = time.time() - start
+    try:
+        files = crawl(paths, exclude=(args.exclude or []) + list(cfg.get("exclude", [])))
+    except (FileNotFoundError, RuntimeError) as e:
+        _err(str(e))
+        return EXIT_ERROR
 
-    if not args.json:
-        print(f"   Analysis complete in {elapsed:.2f}s\n", flush=True)
+    root = Path(paths[0]).resolve()
+    root = root if root.is_dir() else root.parent
+    analysis = analyze_project(files, root)
 
-    # 4. Report
-    render(
-        pc=project_cost,
-        root_dir=str(root),
-        json_output=args.json,
-        json_path=args.json_out,
-        show_dag=args.dag,
-        quiet=args.quiet,
-    )
+    select = set(args.select or cfg.get("select") or RULES)
+    ignore = set(args.ignore or cfg.get("ignore") or [])
+    for fr in analysis.files:
+        fr.findings = [f for f in fr.findings if f.rule in select and f.rule not in ignore]
+
+    try:
+        est = estimate(analysis, prices, assumptions)
+    except ValueError as e:
+        _err(f"{e}")
+        return EXIT_ERROR
+
+    show_costs = not args.no_costs and not args.quiet
+    if output:
+        with open(output, "w", encoding="utf-8", newline="\n") as f:
+            render(fmt, analysis, est, f, color=False, show_costs=show_costs)
+        print(f"agentguard: wrote {fmt} report to {output}", file=sys.stderr)
+    else:
+        render(fmt, analysis, est, sys.stdout, color=use_color(sys.stdout, args.color), show_costs=show_costs)
+
+    fail_on = args.fail_on or cfg.get("fail_on", "high")
+    if fail_on != "never" and any(SEVERITY_RANK[f.severity] >= SEVERITY_RANK[fail_on] for f in analysis.findings):
+        return EXIT_FINDINGS
+    return EXIT_OK
+
+
+def entry() -> None:
+    sys.exit(main())
 
 
 if __name__ == "__main__":
-    main()
+    entry()

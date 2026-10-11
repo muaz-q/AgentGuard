@@ -1,52 +1,69 @@
-"""Project Crawler — recursively finds all candidate agentic files."""
+"""Find the Python files to analyse."""
 
+from __future__ import annotations
+
+import fnmatch
 import os
 from pathlib import Path
-from typing import List
-
-SUPPORTED_EXTENSIONS = {".py", ".js", ".ts"}
+from typing import Iterable, List, Sequence
 
 SKIP_DIRS = {
     ".git",
+    ".hg",
+    ".svn",
     "__pycache__",
     "node_modules",
     ".venv",
     "venv",
+    "env",
+    ".env",
+    ".tox",
+    ".nox",
     ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
     "dist",
     "build",
     ".cache",
     ".next",
     "coverage",
-    "env",
+    "site-packages",
+    ".eggs",
 }
+MAX_FILES = 20_000
 
-MAX_FILES = 5000  # safety guard
+
+def _excluded(rel: str, patterns: Sequence[str]) -> bool:
+    return any(fnmatch.fnmatch(rel, p) or fnmatch.fnmatch(rel, p.rstrip("/") + "/*") for p in patterns)
 
 
-def crawl(root_dir: str) -> List[Path]:
-    """Recursively traverse root_dir and return all candidate files."""
-    root = Path(root_dir).resolve()
-    if not root.exists():
-        raise FileNotFoundError(f"Directory not found: {root_dir}")
-
-    candidates = []
-
-    for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
-        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
-
-        for fname in filenames:
-            path = Path(dirpath) / fname
-
-            if path.is_symlink():
-                continue
-
-           
-            if path.suffix in SUPPORTED_EXTENSIONS:
-                candidates.append(path)
-
-            if len(candidates) >= MAX_FILES:
-                print(f"⚠ Reached file scan limit ({MAX_FILES}). Stopping early.")
-                return sorted(candidates)
-
-    return sorted(candidates)
+def crawl(paths: Iterable[str], exclude: Sequence[str] = ()) -> List[Path]:
+    """Python files under each path (files are taken as given), sorted and de-duplicated."""
+    found = set()
+    for raw in paths:
+        p = Path(raw)
+        if not p.exists():
+            raise FileNotFoundError(f"no such file or directory: {raw}")
+        if p.is_file():
+            found.add(p.resolve())
+            continue
+        base = p.resolve()
+        for dirpath, dirnames, filenames in os.walk(base):
+            rel_dir = Path(dirpath).relative_to(base).as_posix()
+            dirnames[:] = sorted(
+                d
+                for d in dirnames
+                if d not in SKIP_DIRS
+                and not d.endswith(".egg-info")
+                and not _excluded(f"{rel_dir}/{d}".lstrip("./"), exclude)
+            )
+            for name in filenames:
+                if not name.endswith(".py"):
+                    continue
+                path = Path(dirpath) / name
+                if path.is_symlink() or _excluded(path.relative_to(base).as_posix(), exclude):
+                    continue
+                found.add(path)
+                if len(found) > MAX_FILES:
+                    raise RuntimeError(f"more than {MAX_FILES} Python files; narrow the path or use --exclude")
+    return sorted(found)

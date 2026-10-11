@@ -1,296 +1,299 @@
-"""Reporter — renders the AgentGuard analysis as CLI output and JSON."""
+"""Render findings and cost estimates as text, JSON, SARIF or Markdown."""
+
+from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, List, Optional, TextIO
 
-from agentguard.simulator import ProjectCost, FileCost, DEPTH_LEVELS
+from agentguard import __version__
+from agentguard.analyzer import Finding, ProjectAnalysis
+from agentguard.estimator import Estimate, SiteEstimate
+from agentguard.rules import RULES, SEVERITY_RANK
 
-# ─── ANSI colors ──────────────────────────────────────────────────────────────
-
-RESET  = "\033[0m"
-BOLD   = "\033[1m"
-DIM    = "\033[2m"
-RED    = "\033[91m"
-YELLOW = "\033[93m"
-GREEN  = "\033[92m"
-CYAN   = "\033[96m"
-BLUE   = "\033[94m"
-MAGENTA= "\033[95m"
-WHITE  = "\033[97m"
-
-def _c(text, *codes):
-    """Apply ANSI codes if stdout is a tty."""
-    if not sys.stdout.isatty():
-        return str(text)
-    return "".join(codes) + str(text) + RESET
-
-def _fmt_cost(cost: float) -> str:
-    if cost == 0:
-        return "$0.00"
-    if cost < 0.001:
-        return f"${cost:.6f}"
-    if cost < 1:
-        return f"${cost:.4f}"
-    return f"${cost:.2f}"
-
-def _risk_label(flags) -> str:
-    if not flags:
-        return _c("✓ LOW", GREEN, BOLD)
-    if len(flags) >= 3 or any("context" in f.lower() or "quadratic" in f.lower() for f in flags):
-        return _c("⚠ CRITICAL", RED, BOLD)
-    return _c("⚡ MEDIUM", YELLOW, BOLD)
-
-BANNER = r"""
-    ___                    __  ______                     __
-   /   | ____ ____  ____  / /_/ ____/_  ______ __________/ /
-  / /| |/ __ `/ _ \/ __ \/ __/ / __/ / / / __ `/ ___/ __  /
- / ___ / /_/ /  __/ / / / /_/ /_/ / /_/ / /_/ / /  / /_/ /
-/_/  |_\__, /\___/_/ /_/\__/\____/\__,_/\__,_/_/   \__,_/
-       /____/
-"""
-
-def _separator(char="─", width=72):
-    return _c(char * width, DIM)
-
-def _header(title: str, width=72):
-    pad = (width - len(title) - 4) // 2
-    return _c("┌" + "─"*pad + "  " + title + "  " + "─"*pad + "┐", CYAN)
+FORMATS = ("text", "json", "sarif", "markdown")
+SARIF_LEVEL = {"high": "error", "medium": "warning", "low": "note"}
+REPO_URL = "https://github.com/muaz-q/agentguard"
 
 
-# ─── File-level report ────────────────────────────────────────────────────────
-
-def _render_file(fc: FileCost, rel_root: Optional[str] = None) -> str:
-    lines = []
-    path_str = str(fc.path)
-    if rel_root:
-        try:
-            path_str = str(Path(fc.path).relative_to(rel_root))
-        except ValueError:
-            pass
-
-    lang_badge = {"python": "🐍 py", "javascript": "🟨 js", "typescript": "🔷 ts"}.get(fc.language, fc.language)
-
-    lines.append("")
-    lines.append(_c(f"  {path_str}", BOLD, WHITE) + f"  [{lang_badge}]")
-
-    if fc.errors:
-        for e in fc.errors:
-            lines.append(_c(f"    ⚠ Parse error: {e}", YELLOW))
-
-    if fc.api_calls == 0:
-        lines.append(_c("    No LLM API calls detected", DIM))
-        return "\n".join(lines)
-
-    lines.append(f"    Calls: {_c(fc.api_calls, CYAN, BOLD)}  •  Loops: {_c(fc.loop_count, CYAN)}  •  Risk: {_risk_label(fc.risk_flags)}")
-
-    if fc.depth_costs:
-        lines.append("")
-        lines.append(_c("    Loop Depth Simulation:", DIM))
-        for dc in fc.depth_costs:
-            bk = _c(" ⚠️  BANKRUPTCY RISK", RED, BOLD) if dc.bankruptcy_risk else ""
-            depth_str = _c(f"N={dc.depth:>3}", MAGENTA)
-            cost_str = f"{_c(_fmt_cost(dc.cost_min), GREEN)} → {_c(_fmt_cost(dc.cost_max), RED)}"
-            calls_str = _c(f"({dc.total_calls} calls)", DIM)
-            lines.append(f"      {depth_str}  {cost_str}  {calls_str}{bk}")
-
-    if fc.risk_flags:
-        lines.append("")
-        lines.append(_c("    Risk Flags:", YELLOW, BOLD))
-        for flag in fc.risk_flags:
-            lines.append(_c(f"    ⚡ {flag}", YELLOW))
-
-    if fc.optimization_tips:
-        lines.append("")
-        lines.append(_c("    Optimizations:", GREEN, BOLD))
-        for tip in fc.optimization_tips:
-            lines.append(_c(f"    → {tip}", GREEN))
-
-    return "\n".join(lines)
+def display_path(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(Path.cwd().resolve()).as_posix()
+    except ValueError:
+        return path.as_posix()
 
 
-# ─── Project summary ──────────────────────────────────────────────────────────
-
-def _render_summary(pc: ProjectCost) -> str:
-    lines = []
-    lines.append("")
-    lines.append(_c("  COST SUMMARY", BOLD, WHITE))
-    lines.append(_separator())
-
-    def row(label, value, color=WHITE):
-        lines.append(f"  {_c(label, DIM):<40} {_c(value, color, BOLD)}")
-
-    row("Model:", pc.model)
-    row("Files scanned:", str(pc.total_files))
-    row("Files with LLM activity:", str(pc.analyzed_files))
-    lines.append(_separator())
-
-    row("Total Cost Range (N=1 → N=100):",
-        f"{_fmt_cost(pc.total_min)}  →  {_fmt_cost(pc.total_max)}")
-    row("Upper Bound (worst case, no opt):", _fmt_cost(pc.upper_bound_naive), RED)
-    row("Optimized Estimate (w/ caching):", _fmt_cost(pc.optimized_estimate), GREEN)
-    row("Savings Alpha:", f"{_fmt_cost(pc.savings_alpha)} ({int(pc.savings_alpha / max(pc.upper_bound_naive, 0.0001) * 100)}%)", CYAN)
-
-    return "\n".join(lines)
+def fmt_cost(x: float) -> str:
+    if x == 0:
+        return "$0"
+    if x < 0.01:
+        return f"${x:.4f}"
+    if x < 100:
+        return f"${x:,.2f}"
+    return f"${x:,.0f}"
 
 
-# ─── Risk summary ─────────────────────────────────────────────────────────────
-
-def _render_risks(pc: ProjectCost) -> str:
-    risk_files = [fc for fc in pc.file_costs if fc.risk_flags]
-    if not risk_files:
-        return _c("\n  ✓ No high-risk files detected.", GREEN, BOLD)
-
-    lines = []
-    lines.append("")
-    lines.append(_c("  TOP RISK FILES", BOLD, RED))
-    lines.append(_separator())
-
-    for fc in sorted(risk_files, key=lambda f: -len(f.risk_flags))[:10]:
-        path_str = Path(fc.path).name
-        lines.append(f"\n  {_c(path_str, BOLD, RED)}  ({len(fc.risk_flags)} risk flags)")
-        for flag in fc.risk_flags:
-            lines.append(_c(f"    ⚡ {flag}", YELLOW))
-
-    return "\n".join(lines)
+def _site_label(s: SiteEstimate) -> str:
+    site = s.site
+    where = f"{display_path(site.path)}:{site.line}"
+    if site.target:
+        return f"{where} -> {site.target.split(':', 1)[1]}()"
+    return f"{where} {site.api} [{s.model}{'*' if s.model_assumed else ''}]"
 
 
-# ─── Recommendations ─────────────────────────────────────────────────────────
-
-def _render_recommendations(pc: ProjectCost) -> str:
-    # Deduplicate tips across all files
-    seen = set()
-    all_tips = []
-    for fc in pc.file_costs:
-        for tip in fc.optimization_tips:
-            if tip not in seen and "No critical" not in tip:
-                seen.add(tip)
-                all_tips.append(tip)
-
-    if not all_tips:
-        return ""
-
-    lines = []
-    lines.append("")
-    lines.append(_c("  RECOMMENDATIONS", BOLD, CYAN))
-    lines.append(_separator())
-    for i, tip in enumerate(all_tips, 1):
-        lines.append(_c(f"  {i}. {tip}", CYAN))
-    return "\n".join(lines)
+def _top_sites(est: Estimate, n: int = 5) -> List[SiteEstimate]:
+    worst = est.depths[-1]
+    return sorted(est.sites, key=lambda s: s.high[worst].cost, reverse=True)[:n]
 
 
-# ─── DAG (Mermaid) ───────────────────────────────────────────────────────────
-
-def build_mermaid_dag(pc: ProjectCost) -> str:
-    lines = ["graph TD"]
-    lines.append('    Project["🛡 AgentGuard Project"]')
-    for i, fc in enumerate(fc for fc in pc.file_costs if fc.api_calls > 0):
-        name = Path(fc.path).name.replace(".", "_").replace("-", "_")
-        node_id = f"F{i}_{name}"
-        label = f"{Path(fc.path).name}\\n{fc.api_calls} calls"
-        if fc.risk_flags:
-            lines.append(f'    {node_id}["{label}"] --> Risk_{i}["⚡ {len(fc.risk_flags)} risks"]')
-            lines.append(f"    Project --> {node_id}")
-        else:
-            lines.append(f'    Project --> {node_id}["{label}"]')
-    return "\n".join(lines)
+# ─── Text ─────────────────────────────────────────────────────────────────────
 
 
-# ─── JSON output ─────────────────────────────────────────────────────────────
+class _Style:
+    def __init__(self, enabled: bool):
+        self.enabled = enabled
 
-def build_json(pc: ProjectCost) -> dict:
+    def __call__(self, text: str, code: str) -> str:
+        return f"\033[{code}m{text}\033[0m" if self.enabled else text
+
+
+def use_color(stream: TextIO, flag: Optional[bool]) -> bool:
+    if flag is not None:
+        return flag
+    if os.environ.get("NO_COLOR"):
+        return False
+    if os.environ.get("FORCE_COLOR"):
+        return True
+    return hasattr(stream, "isatty") and stream.isatty()
+
+
+def render_text(
+    analysis: ProjectAnalysis, est: Estimate, out: TextIO, color: bool = False, show_costs: bool = True
+) -> None:
+    c = _Style(color)
+    sev_color = {"high": "1;31", "medium": "1;33", "low": "36"}
+    findings = analysis.findings
+
+    for r in analysis.files:
+        if r.error:
+            out.write(f"{c(display_path(r.path), '1')}: {c('skipped', '33')} ({r.error})\n")
+    for f in findings:
+        loc = c(f"{display_path(f.path)}:{f.line}:{f.col}", "1")
+        out.write(f"{loc}: {c(f.rule, sev_color[f.severity])} [{f.severity}] {f.message}\n")
+        out.write(c(f"    fix: {f.fix}\n", "2"))
+
+    n_files = len(analysis.files)
+    n_sites = len(analysis.sites)
+    counts = {s: sum(1 for f in findings if f.severity == s) for s in ("high", "medium", "low")}
+    out.write("\n")
+    summary = f"{len(findings)} finding(s) ({counts['high']} high, {counts['medium']} medium, {counts['low']} low)"
+    out.write(f"{summary} in {n_files} file(s), {n_sites} LLM call site(s).\n")
+
+    if not show_costs or not est.sites:
+        return
+    a = est.assumptions
+    out.write("\n" + c("Estimated cost per run", "1") + "\n")
+    out.write(f"  loops with no constant bound evaluated at N = {', '.join(map(str, est.depths))}\n")
+    for d in est.depths:
+        lo, hi = est.total(d, "low"), est.total(d, "high")
+        out.write(
+            f"  N={d:<5} {fmt_cost(lo.cost):>12} - {fmt_cost(hi.cost):<12} "
+            f"({hi.calls:,.0f} calls, {hi.input + hi.output:,.0f} tokens at most)\n"
+        )
+    out.write("\n" + c("Largest cost drivers", "1") + f" (at N={est.depths[-1]}, high end)\n")
+    for s in _top_sites(est):
+        worst = s.high[est.depths[-1]]
+        out.write(f"  {fmt_cost(worst.cost):>12}  {_site_label(s)}\n")
+    out.write(
+        c(
+            f"\n  assumptions: {a.system_tokens} system + {a.input_tokens} input tokens per call, "
+            f"{a.output_min}-{a.output_max} output tokens; default model {a.model}; prices as of {est.prices_as_of}\n",
+            "2",
+        )
+    )
+    if any(s.model_assumed for s in est.sites):
+        out.write(c("  * model not found in code or price table; priced as the default model\n", "2"))
+    if est.unknown_models:
+        out.write(
+            c(f"  unpriced models in code: {', '.join(sorted(est.unknown_models))} (add them with --prices)\n", "2")
+        )
+
+
+# ─── JSON ─────────────────────────────────────────────────────────────────────
+
+
+def _usage(u) -> Dict[str, float]:
     return {
-        "model": pc.model,
-        "summary": {
-            "total_files": pc.total_files,
-            "analyzed_files": pc.analyzed_files,
-            "cost_min": round(pc.total_min, 6),
-            "cost_max": round(pc.total_max, 6),
-            "upper_bound_naive": round(pc.upper_bound_naive, 6),
-            "optimized_estimate": round(pc.optimized_estimate, 6),
-            "savings_alpha": round(pc.savings_alpha, 6),
-        },
-        "files": [
-            {
-                "path": fc.path,
-                "language": fc.language,
-                "api_calls": fc.api_calls,
-                "loop_count": fc.loop_count,
-                "caching_eligible": fc.caching_eligible,
-                "high_complexity": fc.high_complexity,
-                "risk_flags": fc.risk_flags,
-                "optimization_tips": fc.optimization_tips,
-                "depth_costs": [
-                    {
-                        "depth": dc.depth,
-                        "cost_min": round(dc.cost_min, 6),
-                        "cost_avg": round(dc.cost_avg, 6),
-                        "cost_max": round(dc.cost_max, 6),
-                        "total_calls": dc.total_calls,
-                        "bankruptcy_risk": dc.bankruptcy_risk,
-                    }
-                    for dc in fc.depth_costs
-                ],
-                "errors": fc.errors,
-            }
-            for fc in pc.file_costs
-        ],
-        "mermaid_dag": build_mermaid_dag(pc),
+        "calls": round(u.calls, 2),
+        "input_tokens": round(u.input),
+        "output_tokens": round(u.output),
+        "cached_input_tokens": round(u.cached),
+        "cost_usd": round(u.cost, 6),
     }
 
 
-# ─── Master render ────────────────────────────────────────────────────────────
+def build_json(analysis: ProjectAnalysis, est: Estimate) -> Dict[str, Any]:
+    a = est.assumptions
+    return {
+        "schema_version": 1,
+        "tool": {"name": "agentguard", "version": __version__},
+        "summary": {
+            "files": len(analysis.files),
+            "call_sites": len(analysis.sites),
+            "findings": len(analysis.findings),
+            "by_severity": {s: sum(1 for f in analysis.findings if f.severity == s) for s in ("high", "medium", "low")},
+        },
+        "findings": [
+            {
+                "rule": f.rule,
+                "name": f.name,
+                "severity": f.severity,
+                "path": display_path(f.path),
+                "line": f.line,
+                "column": f.col,
+                "message": f.message,
+                "fix": f.fix,
+            }
+            for f in analysis.findings
+        ],
+        "errors": [{"path": display_path(r.path), "error": r.error} for r in analysis.files if r.error],
+        "estimate": {
+            "assumptions": {
+                "system_tokens": a.system_tokens,
+                "input_tokens": a.input_tokens,
+                "output_tokens": [a.output_min, a.output_max],
+                "depths": list(a.depths),
+                "default_model": a.model,
+                "prices_as_of": est.prices_as_of,
+            },
+            "totals": {
+                str(d): {"low": _usage(est.total(d, "low")), "high": _usage(est.total(d, "high"))} for d in est.depths
+            },
+            "sites": [
+                {
+                    "path": display_path(s.site.path),
+                    "line": s.site.line,
+                    "api": s.site.api,
+                    "calls": s.site.target.split(":", 1)[1] if s.site.target else None,
+                    "model": s.model,
+                    "model_assumed": s.model_assumed,
+                    "loops": [{"line": lp.line, "kind": lp.kind, "count": lp.count} for lp in s.site.loops],
+                    "context_growth": s.site.context_growth,
+                    "cost": {
+                        str(d): {"low": round(s.low[d].cost, 6), "high": round(s.high[d].cost, 6)} for d in est.depths
+                    },
+                }
+                for s in est.sites
+            ],
+            "unknown_models": sorted(est.unknown_models),
+        },
+    }
+
+
+# ─── SARIF 2.1.0 ──────────────────────────────────────────────────────────────
+
+
+def build_sarif(analysis: ProjectAnalysis) -> Dict[str, Any]:
+    rule_ids = list(RULES)
+
+    def result(f: Finding) -> Dict[str, Any]:
+        region = {"startLine": f.line, "startColumn": f.col}
+        if f.end_line:
+            region.update(endLine=f.end_line, endColumn=max(f.end_col, 1))
+        return {
+            "ruleId": f.rule,
+            "ruleIndex": rule_ids.index(f.rule),
+            "level": SARIF_LEVEL[f.severity],
+            "message": {"text": f"{f.message}. {f.fix}"},
+            "locations": [
+                {
+                    "physicalLocation": {
+                        "artifactLocation": {"uri": display_path(f.path)},
+                        "region": region,
+                    }
+                }
+            ],
+            "partialFingerprints": {"agentguard/v1": f"{f.rule}:{display_path(f.path)}:{f.message}"},
+        }
+
+    return {
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [
+            {
+                "tool": {
+                    "driver": {
+                        "name": "AgentGuard",
+                        "version": __version__,
+                        "informationUri": REPO_URL,
+                        "rules": [
+                            {
+                                "id": r.id,
+                                "name": r.name,
+                                "shortDescription": {"text": r.summary},
+                                "fullDescription": {"text": f"{r.summary} {r.fix}"},
+                                "help": {"text": r.fix, "markdown": f"**{r.summary}**\n\n{r.fix}"},
+                                "helpUri": f"{REPO_URL}/blob/main/docs/rules.md#{r.id.lower()}",
+                                "defaultConfiguration": {"level": SARIF_LEVEL[r.severity]},
+                                "properties": {
+                                    "tags": ["cost", "llm"],
+                                    "security-severity": {"high": "7.0", "medium": "5.0", "low": "2.0"}[r.severity],
+                                },
+                            }
+                            for r in RULES.values()
+                        ],
+                    }
+                },
+                "results": [result(f) for f in analysis.findings],
+            }
+        ],
+    }
+
+
+# ─── Markdown (PR comments / GitHub job summary) ──────────────────────────────
+
+
+def build_markdown(analysis: ProjectAnalysis, est: Estimate) -> str:
+    f = analysis.findings
+    icon = {"high": "🔴", "medium": "🟠", "low": "🔵"}
+    lines = ["## AgentGuard", ""]
+    if f:
+        lines += ["| | Rule | Location | Finding |", "|---|---|---|---|"]
+        for x in sorted(f, key=lambda x: -SEVERITY_RANK[x.severity]):
+            lines.append(f"| {icon[x.severity]} | `{x.rule}` | `{display_path(x.path)}:{x.line}` | {x.message} |")
+    else:
+        lines.append("No cost-risk findings.")
+    if est.sites:
+        lines += ["", "### Estimated cost per run", "", "| Loop iterations (N) | Low | High |", "|---|---|---|"]
+        for d in est.depths:
+            lines.append(f"| {d} | {fmt_cost(est.total(d, 'low').cost)} | {fmt_cost(est.total(d, 'high').cost)} |")
+        a = est.assumptions
+        lines += [
+            "",
+            f"<sub>{len(analysis.sites)} call sites. Assumes {a.system_tokens}+{a.input_tokens} input / "
+            f"{a.output_min}-{a.output_max} output tokens per call, default model `{a.model}`, "
+            f"prices as of {est.prices_as_of}. Loops with a constant bound use it.</sub>",
+        ]
+    return "\n".join(lines) + "\n"
+
 
 def render(
-    pc: ProjectCost,
-    root_dir: Optional[str] = None,
-    json_output: bool = False,
-    json_path: Optional[str] = None,
-    show_dag: bool = False,
-    quiet: bool = False,
+    fmt: str,
+    analysis: ProjectAnalysis,
+    est: Estimate,
+    out: TextIO = sys.stdout,
+    color: bool = False,
+    show_costs: bool = True,
 ) -> None:
-    if json_output:
-        payload = build_json(pc)
-        out = json.dumps(payload, indent=2)
-        if json_path:
-            Path(json_path).write_text(out)
-            print(f"JSON saved to: {json_path}")
-        else:
-            print(out)
-        return
-
-    # Human-readable
-    print(_c(BANNER, CYAN, BOLD))
-    print(_c("  Pre-execution Cost Estimator for Agentic AI Systems", DIM))
-    print(_separator("═"))
-
-    if not quiet:
-        # Per-file breakdown
-        print(_c("\n  FILE ANALYSIS", BOLD, WHITE))
-        print(_separator())
-        active = [fc for fc in pc.file_costs if fc.api_calls > 0]
-        if active:
-            for fc in active:
-                print(_render_file(fc, rel_root=root_dir))
-        else:
-            print(_c("\n  No LLM API calls detected in any file.", DIM))
-
-    print("\n" + _separator("═"))
-    print(_render_summary(pc))
-    print("\n" + _separator("═"))
-    print(_render_risks(pc))
-    print("\n" + _separator("═"))
-    print(_render_recommendations(pc))
-
-    if show_dag:
-        print("\n" + _separator("═"))
-        print(_c("\n  DEPENDENCY DAG (Mermaid)\n", BOLD, MAGENTA))
-        print(build_mermaid_dag(pc))
-
-    if json_path:
-        payload = build_json(pc)
-        Path(json_path).write_text(json.dumps(payload, indent=2))
-        print(_c(f"\n  📄 JSON report saved → {json_path}", GREEN))
-
-    print("\n" + _separator("═") + "\n")
+    if fmt == "text":
+        render_text(analysis, est, out, color, show_costs)
+    elif fmt == "json":
+        out.write(json.dumps(build_json(analysis, est), indent=2) + "\n")
+    elif fmt == "sarif":
+        out.write(json.dumps(build_sarif(analysis), indent=2) + "\n")
+    elif fmt == "markdown":
+        out.write(build_markdown(analysis, est))
+    else:
+        raise ValueError(f"unknown format {fmt!r}")
