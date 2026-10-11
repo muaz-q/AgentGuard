@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentguard-cli"
+version = "0.2.3"
+description = "Detect runaway AI costs in agentic systems before they hit production"
+readme = "README.md"
+requires-python = ">=3.8"
+
+authors = [
+    { name = "Muaz" }
+]
+
+keywords = ["ai", "llm", "cost", "agent", "openai", "claude"]
+
+[project.urls]
+Homepage = "https://agent-guard-six.vercel.app"
+
+[project.scripts]
+agentguard = "agentguard.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
