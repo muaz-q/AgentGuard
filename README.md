@@ -100,7 +100,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions: { contents: read, security-events: write }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: muaz-q/AgentGuard@v0.3.0
         with:
           fail-on: high        # high | medium | low | never
