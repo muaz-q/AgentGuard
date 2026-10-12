@@ -1,8 +1,8 @@
 # AgentGuard
 
 [![CI](https://github.com/muaz-q/AgentGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/muaz-q/AgentGuard/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/agentguard-cli)](https://pypi.org/project/agentguard-cli/)
-[![Python](https://img.shields.io/pypi/pyversions/agentguard-cli)](https://pypi.org/project/agentguard-cli/)
+[![PyPI](https://img.shields.io/pypi/v/agentguard)](https://pypi.org/project/agentguard/)
+[![Python](https://img.shields.io/pypi/pyversions/agentguard)](https://pypi.org/project/agentguard/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 **A static analyser that finds the code patterns that make LLM agents expensive - before they run.**
@@ -81,7 +81,7 @@ spreadsheet - was 99% low: it is linear in the number of turns, while turn *k* r
 ## Install
 
 ```bash
-pip install agentguard-cli
+pip install agentguard
 agentguard .                    # scan the current project
 ```
 
@@ -125,7 +125,7 @@ their own work: a `scan` tool that returns the findings and cost estimate as JSO
 `explain_rule`. Both are read-only.
 
 ```bash
-pip install "agentguard-cli[mcp]"                 # Python 3.10+
+pip install "agentguard[mcp]"                 # Python 3.10+
 claude mcp add agentguard -- agentguard-mcp       # Claude Code; any MCP client works the same way
 ```
 

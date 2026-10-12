@@ -1,6 +1,9 @@
 # Changelog
 
-## 0.3.0 - 2026-10-11
+## 0.3.0 - 2026-10-12
+
+The package is now published as `agentguard` (`pip install agentguard`). Versions up to
+0.2.3 were published as `agentguard-cli`; that name is no longer updated.
 
 A rewrite. 0.2.x produced cost figures that could not be trusted and had several broken
 basics; 0.3.0 reports located, rule-based findings and a cost model checked against

@@ -1,7 +1,7 @@
 name: Release
 
 # Push a tag like v0.3.0 to publish to PyPI. Uses PyPI trusted publishing: no API token is
-# stored in the repository. One-time setup on pypi.org: Project agentguard-cli -> Publishing ->
+# stored in the repository. One-time setup on pypi.org: Project agentguard -> Publishing ->
 # add a GitHub publisher for this repository, workflow `release.yml`, environment `pypi`.
 
 on:
