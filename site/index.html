@@ -290,6 +290,24 @@
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
 
   /* ── REAL OUTPUT STYLES ───────────────────────── */
+  .op-line {
+    font-family: var(--mono); font-size: 0.78rem; line-height: 1.65;
+    color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere; margin: 0;
+    opacity: 0; transition: opacity 0.25s ease;
+  }
+  .op-line.shown { opacity: 1; }
+  .op-banner { color: var(--accent); font-size: 0.7rem; line-height: 1.25; white-space: pre; overflow-x: auto; }
+  .op-cursor { display: inline-block; width: 8px; height: 0.9em; background: var(--accent); vertical-align: text-bottom; }
+  .a-b { font-weight: 700; }
+  .a-dim { color: var(--text-dim); }
+  .a-white { color: var(--text); }
+  .a-cyan { color: #5fd7ff; }
+  .a-green { color: var(--accent); }
+  .a-yellow { color: var(--yellow); }
+  .a-red { color: var(--red); }
+  .a-magenta { color: #d48cff; }
+  @media (prefers-reduced-motion: reduce) { .op-line { opacity: 1; transition: none; } }
+
   .output-wrap {
     max-width: 860px;
     margin: 0 auto;
@@ -694,7 +712,7 @@
 <section class="hero">
   <div class="hero-bg"></div>
   <div class="hero-grid"></div>
-  <span class="hero-eyebrow">AI Cost Intelligence CLI</span>
+  <span class="hero-eyebrow">Static analysis for LLM agent code</span>
   <!-- Hero logo mark: Option A circuit shield -->
   <svg width="90" height="90" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:1.5rem; opacity:0; animation: fadeUp 0.6s ease forwards 0.15s;">
     <!-- outer ring -->
@@ -729,8 +747,8 @@
     <line x1="172" y1="100" x2="184" y2="118" stroke="#00e5a0" stroke-width="1.2" opacity="0.5"/>
     <circle cx="184" cy="118" r="3" fill="none" stroke="#00e5a0" stroke-width="1.2" opacity="0.6"/>
   </svg>
-  <h1>Your AI agent might cost <span class="highlight">$100k/month.</span></h1>
-  <p class="hero-sub">Find out before you run it.</p>
+  <h1>Find the loops that make your <span class="highlight">AI agent expensive.</span></h1>
+  <p class="hero-sub">AgentGuard reads your Python without running it, points to the exact line, and estimates what a run costs.</p>
   <div class="hero-actions">
     <a href="#install" class="btn-primary">Get Started →</a>
     <a href="#example" class="btn-secondary">↓ View Example</a>
@@ -742,7 +760,7 @@
   <div class="section">
     <div class="section-label">Live Example</div>
     <h2 class="section-title reveal">See exactly what AgentGuard catches.</h2>
-    <p class="section-desc reveal">Run it on any Python project. Get a cost projection in seconds.</p>
+    <p class="section-desc reveal">Real output of AgentGuard 0.3.1 on <code>examples/research_agent.py</code>, a demo agent in the repo with five planted problems.</p>
 
     <div class="output-wrap reveal" id="output-wrap">
       <div class="output-glow"></div>
@@ -751,81 +769,77 @@
           <div class="term-dot term-dot-r"></div>
           <div class="term-dot term-dot-y"></div>
           <div class="term-dot term-dot-g"></div>
-          <span class="term-title-bar">agentguard — bash — 120×50</span>
+          <span class="term-title-bar">agentguard 0.3.1 · examples/research_agent.py</span>
         </div>
         <div class="op">
 
-          <!-- ASCII art logo -->
-          <pre class="ascii-art" id="ascii">    /\                    __  ______                     __
-   /  \   ____ ____  ____/ /_/ ____/__  ______ __________/ /
-  / /\ \ / __ `/ _ \/ __  __/ / __/ / / / __ `/ ___/ __  /
- / ____ / /_/ /  __/ / / / / /_/ / /_/ / /_/ / /  / /_/ /
-/_/    \_\__, /\___/_/ /_/  \____/\__,_/\__,_/_/   \__,_/
-         /____/</pre>
-          <div class="ascii-sub" id="asub">  Pre-execution Cost Estimator for Agentic AI Systems</div>
-          <hr class="op-divider" id="div0" />
-
-          <!-- FILE ANALYSIS -->
-          <div class="op-section-header" id="s1">FILE ANALYSIS</div>
-          <hr class="op-section-divider" id="div1" />
-
-          <div class="op-file-name" id="f1">  main.py &nbsp;<span style="color:#7aa892;font-weight:400">[ 🔄 py]</span></div>
-          <div class="op-file-meta" id="f2">  Calls: <span class="op-meta-num">1</span> &nbsp;•&nbsp; Loops: <span class="op-meta-num">1</span> &nbsp;•&nbsp; Risk: <span class="op-risk-med">⚡ MEDIUM</span></div>
-
-          <div class="op-sim-header" id="sh1">  Loop Depth Simulation:</div>
-          <div class="op-sim-row" id="sr1"><span class="op-n">N=&nbsp;&nbsp;1</span>  <span class="op-cost-lo">$0.0020</span> <span class="op-arrow">→</span> <span class="op-cost-hi">$0.0068</span>  <span style="color:#5a7a70">(1 calls)</span></div>
-          <div class="op-sim-row" id="sr2"><span class="op-n">N=&nbsp;&nbsp;5</span>  <span class="op-cost-lo">$0.0301</span> <span class="op-arrow">→</span> <span class="op-cost-hi">$0.1325</span>  <span style="color:#5a7a70">(5 calls)</span></div>
-          <div class="op-sim-row" id="sr3"><span class="op-n">N=&nbsp;20</span>  <span class="op-cost-lo">$0.4221</span> <span class="op-arrow">→</span> <span class="op-cost-hi">$1.86</span> &nbsp; <span style="color:#5a7a70">(20 calls)</span></div>
-          <div class="op-sim-row" id="sr4"><span class="op-n">N=100</span>  <span class="op-cost-lo">$10.15</span> &nbsp;<span class="op-arrow">→</span> <span class="op-cost-hi">$44.62</span>  <span style="color:#5a7a70">(100 calls)</span> <span class="op-bankruptcy">⚠ BANKRUPTCY RISK</span></div>
-
-          <div class="op-risk-flags-header" id="rfh">  Risk Flags:</div>
-          <div class="op-flag" id="rf1"><span class="op-flag-icon">⚡</span> API calls inside loops — cost grows with loop depth</div>
-          <div class="op-flag" id="rf2"><span class="op-flag-icon">⚡</span> No loop depth limiter found — unbounded execution risk</div>
-
-          <div class="op-opt-header" id="oh1">  Optimizations:</div>
-          <div class="op-opt" id="oo1"><span class="op-opt-arrow">→</span> Add max_iterations/max_steps guard to bound loop depth</div>
-          <div class="op-opt" id="oo2"><span class="op-opt-arrow">→</span> Consider model downgrade: frontier → flash/haiku (10-20× cheaper)</div>
-
-          <hr class="op-section-divider" id="div2" style="margin-top:1.25rem" />
-
-          <!-- COST SUMMARY -->
-          <div class="op-section-header" id="s2">COST SUMMARY</div>
-          <hr class="op-section-divider" id="div3" />
-
-          <div class="op-cost-row" id="cs1"><span class="op-cost-label">Model:</span><span class="op-cost-val">gpt-4o</span></div>
-          <div class="op-cost-row" id="cs2"><span class="op-cost-label">Files scanned:</span><span class="op-cost-val">1</span></div>
-          <div class="op-cost-row" id="cs3"><span class="op-cost-label">Files with LLM activity:</span><span class="op-cost-val">1</span></div>
-
-          <hr class="op-section-divider" id="div4" style="margin:0.75rem 0" />
-
-          <div class="op-cost-row" id="cs4">
-            <span class="op-cost-label">Total Cost Range (N=1 → N=100):</span>
-            <span class="op-cost-range"><span class="lo">$0.0020</span> <span class="arr">→</span> <span class="hi">$44.62</span></span>
-          </div>
-          <div class="op-cost-row" id="cs5"><span class="op-cost-label">Upper Bound (worst case, no opt):</span><span class="op-cost-val orange">$44.62</span></div>
-          <div class="op-cost-row" id="cs6"><span class="op-cost-label">Optimized Estimate (w/ caching):</span><span class="op-cost-val green">$44.62</span></div>
-          <div class="op-cost-row" id="cs7"><span class="op-cost-label">Savings Alpha:</span><span class="op-cost-val green">$0.00 (0%)</span></div>
-
-          <hr class="op-section-divider" id="div5" style="margin-top:1.25rem" />
-
-          <!-- TOP RISK FILES -->
-          <div class="op-section-header" id="s3" style="color:#ff4444">TOP RISK FILES</div>
-          <hr class="op-section-divider" id="div6" />
-
-          <div class="op-risk-filename" id="tr1">main.py <span class="op-risk-count">&nbsp;(2 risk flags)</span></div>
-          <div class="op-risk-flag" id="tr2"><span class="op-flag-icon">⚡</span> API calls inside loops — cost grows with loop depth</div>
-          <div class="op-risk-flag" id="tr3"><span class="op-flag-icon">⚡</span> No loop depth limiter found — unbounded execution risk</div>
-
-          <hr class="op-section-divider" id="div7" style="margin-top:1.25rem" />
-
-          <!-- RECOMMENDATIONS -->
-          <div class="op-section-header" id="s4" style="color:#00bfff">RECOMMENDATIONS</div>
-          <hr class="op-section-divider" id="div8" />
-
-          <div class="op-rec" id="rec1">1. Add max_iterations/max_steps guard to bound loop depth</div>
-          <div class="op-rec" id="rec2">2. Consider model downgrade: frontier → flash/haiku (10-20× cheaper)</div>
-
-          <div class="op-prompt" id="pr1"><span class="op-prompt-sym">$</span> <span id="blink-cursor" style="display:inline-block;width:8px;height:0.9em;background:#00e5a0;vertical-align:text-bottom;"></span></div>
+          <div class="op-line"><span class="op-prompt-sym">$</span> agentguard examples/research_agent.py</div>
+          <pre class="op-line op-banner">    ___                    __  ______                     __
+   /   | ____ ____  ____  / /_/ ____/_  ______ __________/ /
+  / /| |/ __ `/ _ \/ __ \/ __/ / __/ / / / __ `/ ___/ __  /
+ / ___ / /_/ /  __/ / / / /_/ /_/ / /_/ / /_/ / /  / /_/ /
+/_/  |_\__, /\___/_/ /_/\__/\____/\__,_/\__,_/_/   \__,_/
+      /____/</pre>
+          <div class="op-line"><span class="a-dim">  Find LLM cost risks in agent code, before it runs  ·  v0.3.1</span></div>
+          <div class="op-line"><span class="a-dim">════════════════════════════════════════════════════════════════════════</span></div>
+          <div class="op-line">&nbsp;</div>
+          <div class="op-line"><span class="a-white a-b">  FILE ANALYSIS</span></div>
+          <div class="op-line"><span class="a-dim">────────────────────────────────────────────────────────────────────────</span></div>
+          <div class="op-line">&nbsp;</div>
+          <div class="op-line"><span class="a-white a-b">  examples/research_agent.py</span><span class="a-dim">  [🐍 py]</span></div>
+          <div class="op-line">    Call sites: <span class="a-cyan a-b">3</span>  •  Loops: <span class="a-cyan">3</span>  •  Risk: <span class="a-red a-b">⚠ CRITICAL</span></div>
+          <div class="op-line">&nbsp;</div>
+          <div class="op-line"><span class="a-yellow a-b">    Findings:</span></div>
+          <div class="op-line">    <span class="a-red a-b">⚠</span> <span class="a-magenta">line 31</span>  <span class="a-red a-b">AG001</span>  LLM call (anthropic.messages) inside `while` loop (line 28) with no iteration cap</div>
+          <div class="op-line"><span class="a-green">        → Bound the loop with a step counter (e.g. `for step in range(MAX_STEPS)`) or an explicit `if step &gt;= MAX_STEPS: break`.</span></div>
+          <div class="op-line">    <span class="a-red a-b">⚠</span> <span class="a-magenta">line 31</span>  <span class="a-red a-b">AG002</span>  LLM call (anthropic.messages) re-sends a history that grows every iteration; input tokens grow quadratically</div>
+          <div class="op-line"><span class="a-green">        → Keep a sliding window (`messages[-k:]`), summarise old turns, or use server-side compaction/context editing where the provider offers it.</span></div>
+          <div class="op-line">    <span class="a-yellow a-b">⚡</span> <span class="a-magenta">line 31</span>  <span class="a-yellow a-b">AG007</span>  ~2,260-token static prompt re-sent each iteration with no `cache_control`</div>
+          <div class="op-line"><span class="a-green">        → Mark the static prefix with `cache_control` - cached reads bill at about 10% of the input price.</span></div>
+          <div class="op-line">    <span class="a-yellow a-b">⚡</span> <span class="a-magenta">line 47</span>  <span class="a-yellow a-b">AG003</span>  call to `summarise` inside 2 nested loops (lines 45, 46); calls multiply</div>
+          <div class="op-line"><span class="a-green">        → Flatten the work into one batch, or cap the inner loop.</span></div>
+          <div class="op-line">    <span class="a-cyan">•</span> <span class="a-magenta">line 21</span>  <span class="a-cyan">AG006</span>  LLM call (openai.chat) sets no output-token cap</div>
+          <div class="op-line"><span class="a-green">        → Pass `max_tokens` / `max_completion_tokens` / `max_output_tokens`.</span></div>
+          <div class="op-line">&nbsp;</div>
+          <div class="op-line"><span class="a-dim">    Cost per run by loop depth (N = iterations of open-ended loops):</span></div>
+          <div class="op-line">      <span class="a-magenta">N=  1</span>  <span class="a-green">$0.0082</span> → <span class="a-red">$0.02</span>  <span class="a-dim">(2 calls)</span></div>
+          <div class="op-line">      <span class="a-magenta">N= 10</span>  <span class="a-green">$0.21</span> → <span class="a-red">$0.49</span>  <span class="a-dim">(110 calls)</span></div>
+          <div class="op-line">      <span class="a-magenta">N=100</span>  <span class="a-green">$14.88</span> → <span class="a-red">$36.40</span>  <span class="a-dim">(10,100 calls)</span><span class="a-red a-b">  ⚠ over $10 per run</span></div>
+          <div class="op-line">&nbsp;</div>
+          <div class="op-line"><span class="a-dim">════════════════════════════════════════════════════════════════════════</span></div>
+          <div class="op-line">&nbsp;</div>
+          <div class="op-line"><span class="a-white a-b">  COST SUMMARY</span></div>
+          <div class="op-line"><span class="a-dim">────────────────────────────────────────────────────────────────────────</span></div>
+          <div class="op-line">  <span class="a-dim">Default model:                    </span> <span class="a-white a-b">claude-sonnet-5-5</span></div>
+          <div class="op-line">  <span class="a-dim">Files scanned:                    </span> <span class="a-white a-b">1</span></div>
+          <div class="op-line">  <span class="a-dim">Files with LLM calls:             </span> <span class="a-white a-b">1</span></div>
+          <div class="op-line">  <span class="a-dim">LLM call sites:                   </span> <span class="a-white a-b">3</span></div>
+          <div class="op-line"><span class="a-dim">────────────────────────────────────────────────────────────────────────</span></div>
+          <div class="op-line">  <span class="a-dim">Cost per run (N=1):               </span> <span class="a-green a-b">$0.0082  →  $0.02</span></div>
+          <div class="op-line">  <span class="a-dim">Cost per run (N=10):              </span> <span class="a-green a-b">$0.21  →  $0.49</span></div>
+          <div class="op-line">  <span class="a-dim">Cost per run (N=100):             </span> <span class="a-red a-b">$14.88  →  $36.40</span></div>
+          <div class="op-line">&nbsp;</div>
+          <div class="op-line"><span class="a-dim">  Assumes 500 system + 500 input tokens and 200-1000 output tokens per call; prices as of 2026-10-11.</span></div>
+          <div class="op-line">&nbsp;</div>
+          <div class="op-line"><span class="a-dim">════════════════════════════════════════════════════════════════════════</span></div>
+          <div class="op-line">&nbsp;</div>
+          <div class="op-line"><span class="a-red a-b">  TOP RISK FILES</span></div>
+          <div class="op-line"><span class="a-dim">────────────────────────────────────────────────────────────────────────</span></div>
+          <div class="op-line">  <span class="a-red a-b">examples/research_agent.py</span>  (2 high, 2 medium, 1 low)</div>
+          <div class="op-line">&nbsp;</div>
+          <div class="op-line"><span class="a-dim">════════════════════════════════════════════════════════════════════════</span></div>
+          <div class="op-line">&nbsp;</div>
+          <div class="op-line"><span class="a-cyan a-b">  RECOMMENDATIONS</span></div>
+          <div class="op-line"><span class="a-dim">────────────────────────────────────────────────────────────────────────</span></div>
+          <div class="op-line"><span class="a-cyan">  1. [AG001] Bound the loop with a step counter (e.g. `for step in range(MAX_STEPS)`) or an explicit `if step &gt;= MAX_STEPS: break`.</span></div>
+          <div class="op-line"><span class="a-cyan">  2. [AG002] Keep a sliding window (`messages[-k:]`), summarise old turns, or use server-side compaction/context editing where the provider offers it.</span></div>
+          <div class="op-line"><span class="a-cyan">  3. [AG003] Flatten the work into one batch, or cap the inner loop.</span></div>
+          <div class="op-line"><span class="a-cyan">  4. [AG007] Mark the static prefix with `cache_control` - cached reads bill at about 10% of the input price.</span></div>
+          <div class="op-line"><span class="a-cyan">  5. [AG006] Pass `max_tokens` / `max_completion_tokens` / `max_output_tokens`.</span></div>
+          <div class="op-line">&nbsp;</div>
+          <div class="op-line"><span class="a-dim">════════════════════════════════════════════════════════════════════════</span></div>
+          <div class="op-line"><span class="a-red a-b">  5 finding(s), 2 high, in 1 file(s)</span><span class="a-dim">   ·   agentguard --list-rules for details</span></div>
+          <div class="op-line"><span class="op-prompt-sym">$</span> <span id="blink-cursor" class="op-cursor"></span></div>
         </div>
       </div>
     </div>
@@ -836,12 +850,12 @@
 <section id="how" style="border-top: 1px solid var(--border);">
   <div class="section">
     <div class="section-label">How It Works</div>
-    <h2 class="section-title reveal">Three steps. No config needed.</h2>
+    <h2 class="section-title reveal">Three steps. No API key.</h2>
     <div class="steps-grid">
       <div class="step-card reveal">
         <div class="step-number">01</div>
         <h3>Install AgentGuard</h3>
-        <p>One pip command. No API key, no sign-up, no PATH config required.</p>
+        <p>One pip command. No API key and no sign-up: AgentGuard never calls a model or runs your code.</p>
         <span class="step-code">pip install agentguard-lint</span>
       </div>
       <div class="step-card reveal">
@@ -852,9 +866,9 @@
       </div>
       <div class="step-card reveal">
         <div class="step-number">03</div>
-        <h3>See cost risks instantly</h3>
-        <p>Run AgentGuard. Get a projected cost, risk severity, and exact file/line references.</p>
-        <span class="step-code">agentguard --root_dir .</span>
+        <h3>See the cost risks</h3>
+        <p>Each finding comes with a file, a line, a severity and a fix, plus a cost range per run.</p>
+        <span class="step-code">agentguard .</span>
       </div>
     </div>
   </div>
@@ -866,17 +880,17 @@
     <div class="install-text reveal">
       <div class="section-label" style="margin-bottom: 0.75rem;">Installation</div>
       <h2>One command to get started.</h2>
-      <p>No API key needed. No sign-up. No PATH configuration required — works everywhere Python works.</p>
+      <p>No API key, no sign-up, no runtime dependencies. Python 3.9 or newer.</p>
     </div>
     <div class="reveal">
       <div class="code-block" id="install-block">
         <code><span class="cmd-prefix">$</span> pip install agentguard-lint</code>
         <button class="copy-btn" onclick="copyCode('pip install agentguard-lint', this)">copy</button>
       </div>
-      <div style="font-family: var(--mono); font-size: 0.72rem; color: var(--text-dim); letter-spacing: 0.05em; margin: 1rem 0 0.5rem;">If the command doesn't work on your system, run:</div>
+      <div style="font-family: var(--mono); font-size: 0.72rem; color: var(--text-dim); letter-spacing: 0.05em; margin: 1rem 0 0.5rem;">If <code>agentguard</code> isn't found (pip's scripts folder is not on PATH), run:</div>
       <div class="code-block" style="border-color: var(--border);">
-        <code style="color: var(--text-muted);"><span class="cmd-prefix" style="color: var(--text-dim);">$</span> python -m agentguard.cli --root_dir .</code>
-        <button class="copy-btn" onclick="copyCode('python -m agentguard.cli --root_dir .', this)">copy</button>
+        <code style="color: var(--text-muted);"><span class="cmd-prefix" style="color: var(--text-dim);">$</span> python -m agentguard .</code>
+        <button class="copy-btn" onclick="copyCode('python -m agentguard .', this)">copy</button>
       </div>
     </div>
   </div>
@@ -889,15 +903,15 @@
       <div class="section-label" style="justify-content: center;">Usage</div>
       <h2 class="section-title reveal">Run it. That's it.</h2>
       <p class="section-desc reveal" style="margin: 0 auto;">
-        Navigate into your project folder, then run AgentGuard. It recursively scans all Python files and subfolders — no config needed.
+        Run it from your project folder. It scans every Python file in it and its subfolders, skipping virtual environments and hidden folders.
       </p>
 
       <!-- Primary method -->
       <div class="reveal" style="margin-top: 2rem; text-align: left;">
         <div style="font-family: var(--mono); font-size: 0.7rem; color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.5rem;">⭐ Recommended — if PATH is configured</div>
         <div class="code-block">
-          <code><span class="cmd-prefix">$</span> agentguard --root_dir .</code>
-          <button class="copy-btn" onclick="copyCode('agentguard --root_dir .', this)">copy</button>
+          <code><span class="cmd-prefix">$</span> agentguard .</code>
+          <button class="copy-btn" onclick="copyCode('agentguard .', this)">copy</button>
         </div>
       </div>
 
@@ -905,8 +919,8 @@
       <div class="reveal" style="margin-top: 1rem; text-align: left;">
         <div style="font-family: var(--mono); font-size: 0.7rem; color: var(--text-dim); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 0.5rem;">Fallback — works everywhere without PATH</div>
         <div class="code-block" style="border-color: var(--border); opacity: 0.7;">
-          <code style="color: var(--text-muted);"><span class="cmd-prefix" style="color: var(--text-dim);">$</span> python -m agentguard.cli --root_dir .</code>
-          <button class="copy-btn" onclick="copyCode('python -m agentguard.cli --root_dir .', this)">copy</button>
+          <code style="color: var(--text-muted);"><span class="cmd-prefix" style="color: var(--text-dim);">$</span> python -m agentguard .</code>
+          <button class="copy-btn" onclick="copyCode('python -m agentguard .', this)">copy</button>
         </div>
       </div>
 
@@ -926,7 +940,7 @@
         <div style="font-family: var(--mono); font-size: 0.8rem; line-height: 1.75;">
           <span style="color: #ffcc00; font-weight: 700; letter-spacing: 0.05em;">TIP — Run from your project root.</span><br>
           <span style="color: var(--text-muted);">
-            <span style="color: var(--text);">python -m agentguard.cli --root_dir .</span> crawls subfolders automatically,
+            <span style="color: var(--text);">python -m agentguard .</span> crawls subfolders automatically,
             so running it from the root directory gives you full coverage in one pass.
             Running it from a subfolder only scans that subfolder and below.
           </span>
@@ -945,12 +959,12 @@
           </thead>
           <tbody>
             <tr style="border-bottom: 1px solid var(--border); background: rgba(0,229,160,0.03);">
-              <td style="padding: 0.65rem 1rem; color: var(--text);">agentguard --root_dir .</td>
+              <td style="padding: 0.65rem 1rem; color: var(--text);">agentguard .</td>
               <td style="padding: 0.65rem 1rem; text-align: center; color: var(--text-dim);">❌ Needs PATH</td>
               <td style="padding: 0.65rem 1rem; text-align: center; color: #ffcc00;">⭐ Best</td>
             </tr>
             <tr style="border-bottom: 1px solid var(--border);">
-              <td style="padding: 0.65rem 1rem; color: var(--text-muted);">python -m agentguard.cli --root_dir .</td>
+              <td style="padding: 0.65rem 1rem; color: var(--text-muted);">python -m agentguard .</td>
               <td style="padding: 0.65rem 1rem; text-align: center; color: #00e5a0;">✅ Yes</td>
               <td style="padding: 0.65rem 1rem; text-align: center; color: var(--text-dim);">Fallback</td>
             </tr>
@@ -958,7 +972,7 @@
         </table>
       </div>
 
-      <div class="usage-note">Scans all .py files in the current directory and all subdirectories</div>
+      <div class="usage-note">It refuses to scan a home folder or a whole drive, which is never one project.</div>
     </div>
   </div>
 </section>
@@ -967,28 +981,28 @@
 <section id="features" style="border-top: 1px solid var(--border); padding-bottom: 0;">
   <div class="section">
     <div class="section-label">What It Detects</div>
-    <h2 class="section-title reveal">Built for the failure modes that hurt.</h2>
-    <p class="section-desc reveal">AgentGuard catches the patterns that quietly turn a $10/day agent into a $100k/month disaster.</p>
+    <h2 class="section-title reveal">Seven rules, each with a fix.</h2>
+    <p class="section-desc reveal">Every finding names the file, the line and the rule. <a href="https://github.com/muaz-q/AgentGuard/blob/main/docs/rules.md" style="color:var(--accent)">Rule reference →</a></p>
     <div class="features-grid">
       <div class="feature-card reveal">
         <span class="feature-icon">🔁</span>
-        <h3>LLM Calls in Loops</h3>
-        <p>Detects any LLM API call inside a for, while, or recursive function. Flags the exact line.</p>
+        <h3>Uncapped agent loops</h3>
+        <p>AG001. An LLM call in a loop that stops only when the model says so. Step counters, <code>if step &gt;= MAX: break</code>, countdowns and retry helpers count as caps.</p>
       </div>
       <div class="feature-card reveal">
         <span class="feature-icon">📈</span>
-        <h3>Context Growth Analysis</h3>
-        <p>Identifies whether your context window grows linearly or quadratically across agent iterations.</p>
+        <h3>Quadratic history growth</h3>
+        <p>AG002. A conversation history that grows every turn and is re-sent in full. Trimming with <code>messages[-k:]</code> or summarising is recognised.</p>
       </div>
       <div class="feature-card reveal">
         <span class="feature-icon">🌀</span>
-        <h3>Recursion Risk</h3>
-        <p>Finds recursive tool use and estimates worst-case call depth at production scale.</p>
+        <h3>Nested loops and recursion</h3>
+        <p>AG003 and AG005. Calls multiplied by nested loops, and functions that call a model and themselves with no depth parameter.</p>
       </div>
       <div class="feature-card reveal">
         <span class="feature-icon">💸</span>
-        <h3>Cost Scaling Simulation</h3>
-        <p>Projects monthly costs under linear vs quadratic scaling assumptions, benchmarked to model pricing.</p>
+        <h3>Cost per run</h3>
+        <p>Each call priced at the model named in the code, at 1, 10 and 100 loop iterations. Also flags missing <code>max_tokens</code> (AG006), one call per item (AG004) and uncached Anthropic prompts (AG007).</p>
       </div>
     </div>
   </div>
@@ -999,31 +1013,32 @@
   <div class="why-inner">
     <div class="why-stat reveal">
       <div class="stat-item">
-        <div class="stat-value">O(n²)</div>
-        <div class="stat-label">Context growth in most naive agent loops</div>
+        <div class="stat-value">92%</div>
+        <div class="stat-label">precision on 8 held-out open-source projects, every finding checked by hand</div>
       </div>
       <div class="stat-item">
-        <div class="stat-value">$133k</div>
-        <div class="stat-label">Projected monthly cost for one unoptimized agent</div>
+        <div class="stat-value">99%</div>
+        <div class="stat-label">how far too low the naive "N calls" estimate was after 40 measured turns</div>
       </div>
       <div class="stat-item">
-        <div class="stat-value">&lt; 2s</div>
-        <div class="stat-label">Time to scan a typical project with AgentGuard</div>
+        <div class="stat-value">~12k</div>
+        <div class="stat-label">lines per second; 1.9M lines of agent code scanned for the benchmark</div>
       </div>
     </div>
     <div class="why-text reveal">
       <div class="section-label" style="margin-bottom: 0.75rem;">Why It Matters</div>
-      <h2>AI agents silently compound costs until it's too late.</h2>
+      <h2>Agent costs grow with the square of the turns.</h2>
       <p>
-        Most agent frameworks make it trivially easy to write a loop that calls an LLM on every iteration, appending
-        the output to a growing context. At small scale, it's fine. At production scale, it's catastrophic.
+        An LLM API keeps no memory, so an agent re-sends the whole conversation on every turn. Turn 40 pays for the
+        39 turns before it. Pricing an agent as "number of calls × cost of one call" misses this completely.
       </p>
       <p>
-        <span class="emphasis">A context that grows by 1,000 tokens per step reaches 1M tokens in 1,000 steps.</span>
-        At GPT-4 pricing, that single run costs over $1,000. Run it hourly and you've burned $24k before you've noticed.
+        <span class="emphasis">In a measured 40-turn run on a local model, that naive estimate was 99% too low.</span>
+        AgentGuard, calibrated on the first two turns, was 11% low.
       </p>
       <p>
-        AgentGuard exists to <span class="emphasis">prevent expensive mistakes before deployment</span> — not after the invoice arrives.
+        Run on 22 open-source agent projects, it found the pattern in OpenAI's own swarm library, whose turn limit
+        defaults to infinity. <a href="https://github.com/muaz-q/AgentGuard/blob/main/docs/benchmarks.md" style="color:var(--accent)">How it was measured →</a>
       </p>
     </div>
   </div>
@@ -1061,13 +1076,13 @@
     </div>
   </div>
   <div class="footer-links">
-    <a href="https://github.com/muaz-q" target="_blank" rel="noopener">
+    <a href="https://github.com/muaz-q/AgentGuard" target="_blank" rel="noopener">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
       GitHub
     </a>
     <a href="https://github.com/muaz-q/AgentGuard#readme" target="_blank" rel="noopener">Docs</a>
   </div>
-  <div class="footer-copy">MIT License · 2025 AgentGuard</div>
+  <div class="footer-copy">MIT License · 2026 · v0.3.1</div>
 </footer>
 
 <script>
@@ -1092,70 +1107,17 @@
   }, { threshold: 0.1 });
   reveals.forEach(el => revealObs.observe(el));
 
-  // ── Output panel sequenced animation ──────────────
-  // Each entry: [id, delay_ms]
-  const sequence = [
-    ['ascii',  300],
-    ['asub',   700],
-    ['div0',   900],
-    ['s1',    1100],
-    ['div1',  1200],
-    ['f1',    1400],
-    ['f2',    1550],
-    ['sh1',   1750],
-    ['sr1',   1950],
-    ['sr2',   2150],
-    ['sr3',   2350],
-    ['sr4',   2600],
-    ['rfh',   2900],
-    ['rf1',   3050],
-    ['rf2',   3200],
-    ['oh1',   3450],
-    ['oo1',   3600],
-    ['oo2',   3750],
-    ['div2',  4000],
-    ['s2',    4100],
-    ['div3',  4200],
-    ['cs1',   4350],
-    ['cs2',   4480],
-    ['cs3',   4610],
-    ['div4',  4750],
-    ['cs4',   4900],
-    ['cs5',   5050],
-    ['cs6',   5180],
-    ['cs7',   5310],
-    ['div5',  5500],
-    ['s3',    5600],
-    ['div6',  5700],
-    ['tr1',   5850],
-    ['tr2',   6000],
-    ['tr3',   6150],
-    ['div7',  6350],
-    ['s4',    6450],
-    ['div8',  6550],
-    ['rec1',  6700],
-    ['rec2',  6850],
-    ['pr1',   7100],
-  ];
-
+  // ── Output panel: reveal the real output line by line ──
   let outputStarted = false;
-
   function startOutputAnimation() {
     if (outputStarted) return;
     outputStarted = true;
-    sequence.forEach(([id, delay]) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      setTimeout(() => {
-        el.style.transition = 'opacity 0.25s ease';
-        el.style.opacity = '1';
-      }, delay);
-    });
-    // blink cursor after it appears
+    const rows = document.querySelectorAll('#output-wrap .op-line');
+    rows.forEach((el, i) => setTimeout(() => el.classList.add('shown'), 250 + i * 70));
     setTimeout(() => {
       const cur = document.getElementById('blink-cursor');
       if (cur) cur.style.animation = 'blink 1s step-end infinite';
-    }, 7200);
+    }, 250 + rows.length * 70);
   }
 
   // Trigger when the output panel scrolls into view
