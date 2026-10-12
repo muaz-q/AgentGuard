@@ -1,6 +1,6 @@
 """MCP server: lets coding agents (Claude Code, Cursor, ...) run AgentGuard as a tool.
 
-Install with `pip install "agentguard[mcp]"` and register the `agentguard-mcp` command
+Install with `pip install "agentguard-lint[mcp]"` and register the `agentguard-mcp` command
 as a stdio server, e.g. `claude mcp add agentguard -- agentguard-mcp`.
 """
 
@@ -21,7 +21,7 @@ try:
     from mcp.server.mcpserver import MCPServer
     from mcp.types import ToolAnnotations
 except ImportError as e:  # pragma: no cover
-    raise SystemExit('the MCP server needs the "mcp" extra: pip install "agentguard[mcp]"') from e
+    raise SystemExit('the MCP server needs the "mcp" extra: pip install "agentguard-lint[mcp]"') from e
 
 INSTRUCTIONS = """AgentGuard statically analyses Python code for patterns that make LLM agents
 expensive: loops with no iteration cap around model calls, conversation history that grows
