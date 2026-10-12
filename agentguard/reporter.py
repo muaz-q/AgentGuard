@@ -55,8 +55,8 @@ class _Style:
     def __init__(self, enabled: bool):
         self.enabled = enabled
 
-    def __call__(self, text: str, code: str) -> str:
-        return f"\033[{code}m{text}\033[0m" if self.enabled else text
+    def __call__(self, text: object, code: str) -> str:
+        return f"\033[{code}m{text}\033[0m" if self.enabled else str(text)
 
 
 def use_color(stream: TextIO, flag: Optional[bool]) -> bool:
@@ -119,6 +119,154 @@ def render_text(
         out.write(
             c(f"  unpriced models in code: {', '.join(sorted(est.unknown_models))} (add them with --prices)\n", "2")
         )
+
+
+# ─── Pretty terminal report (the default on a terminal) ───────────────────────
+
+BANNER = r"""
+    ___                    __  ______                     __
+   /   | ____ ____  ____  / /_/ ____/_  ______ __________/ /
+  / /| |/ __ `/ _ \/ __ \/ __/ / __/ / / / __ `/ ___/ __  /
+ / ___ / /_/ /  __/ / / / /_/ /_/ / /_/ / /_/ / /  / /_/ /
+/_/  |_\__, /\___/_/ /_/\__/\____/\__,_/\__,_/_/   \__,_/
+      /____/"""
+
+_WIDTH = 72
+_SEV_STYLE = {"high": ("⚠", "1;91"), "medium": ("⚡", "1;93"), "low": ("•", "96")}
+_RISK = {
+    "high": ("⚠ CRITICAL", "1;91"),
+    "medium": ("⚡ MEDIUM", "1;93"),
+    "low": ("• LOW", "1;96"),
+    None: ("✓ CLEAN", "1;92"),
+}
+_SPEND_WARNING = 10.0  # USD per run
+
+
+def render_pretty(
+    analysis: ProjectAnalysis, est: Estimate, out: TextIO, color: bool = False, show_costs: bool = True
+) -> None:
+    c = _Style(color)
+    w = out.write
+
+    def rule(ch: str = "─") -> None:
+        w(c(ch * _WIDTH, "2") + "\n")
+
+    def section(title: str, code: str = "1;97") -> None:
+        w("\n" + c(f"  {title}", code) + "\n")
+        rule()
+
+    w(c(BANNER, "1;96") + "\n")
+    w(c(f"  Find LLM cost risks in agent code, before it runs  ·  v{__version__}", "2") + "\n")
+    rule("═")
+
+    findings_by_file: Dict[Path, List[Finding]] = {}
+    for f in analysis.findings:
+        findings_by_file.setdefault(f.path, []).append(f)
+    est_by_file: Dict[Path, List[SiteEstimate]] = {}
+    for s in est.sites:
+        est_by_file.setdefault(s.site.path, []).append(s)
+
+    active = [r for r in analysis.files if r.sites or findings_by_file.get(r.path)]
+    section("FILE ANALYSIS")
+    if not active:
+        w(c("\n  No LLM API calls found.\n", "2"))
+    for r in active:
+        found = sorted(findings_by_file.get(r.path, []), key=lambda f: (-SEVERITY_RANK[f.severity], f.line))
+        worst = found[0].severity if found else None
+        label, code = _RISK[worst]
+        loops = {lp.line for s in r.sites for lp in s.loops}
+        w("\n" + c(f"  {display_path(r.path)}", "1;97") + c("  [🐍 py]", "2") + "\n")
+        w(f"    Call sites: {c(len(r.sites), '1;96')}  •  Loops: {c(len(loops), '96')}  •  Risk: {c(label, code)}\n")
+        if found:
+            w(c("\n    Findings:", "1;93") + "\n")
+            for f in found:
+                icon, scode = _SEV_STYLE[f.severity]
+                w(f"    {c(icon, scode)} {c(f'line {f.line}', '95')}  {c(f.rule, scode)}  {f.message}\n")
+                w(c(f"        → {f.fix}", "92") + "\n")
+        sites = est_by_file.get(r.path, [])
+        if show_costs and sites:
+            w(c("\n    Cost per run by loop depth (N = iterations of open-ended loops):", "2") + "\n")
+            for d in est.depths:
+                lo = sum(s.low[d].cost for s in sites)
+                hi = sum(s.high[d].cost for s in sites)
+                calls = sum(s.high[d].calls for s in sites)
+                warn = c(f"  ⚠ over ${_SPEND_WARNING:.0f} per run", "1;91") if hi > _SPEND_WARNING else ""
+                w(
+                    f"      {c(f'N={d:>3}', '95')}  {c(fmt_cost(lo), '92')} → {c(fmt_cost(hi), '91')}"
+                    f"  {c(f'({calls:,.0f} calls)', '2')}{warn}\n"
+                )
+
+    skipped = [r for r in analysis.files if r.error]
+    if skipped:
+        w(
+            c(
+                f"\n  Skipped {len(skipped)} file(s) that could not be parsed, e.g. {display_path(skipped[0].path)}",
+                "33",
+            )
+            + "\n"
+        )
+
+    w("\n")
+    rule("═")
+    if show_costs and est.sites:
+        section("COST SUMMARY")
+
+        def row(label: str, value: str, code: str = "1;97") -> None:
+            w(f"  {c(label.ljust(34), '2')} {c(value, code)}\n")
+
+        row("Default model:", est.assumptions.model)
+        row("Files scanned:", f"{len(analysis.files):,}")
+        row("Files with LLM calls:", f"{len({s.path for s in analysis.sites}):,}")
+        row("LLM call sites:", f"{len(analysis.sites):,}")
+        rule()
+        for d in est.depths:
+            lo, hi = est.total(d, "low").cost, est.total(d, "high").cost
+            row(
+                f"Cost per run (N={d}):",
+                f"{fmt_cost(lo)}  →  {fmt_cost(hi)}",
+                "1;91" if hi > _SPEND_WARNING else "1;92",
+            )
+        a = est.assumptions
+        w(
+            c(
+                f"\n  Assumes {a.system_tokens} system + {a.input_tokens} input tokens and {a.output_min}-{a.output_max}"
+                f" output tokens per call; prices as of {est.prices_as_of}.",
+                "2",
+            )
+            + "\n"
+        )
+        w("\n")
+        rule("═")
+
+    risky = sorted(
+        findings_by_file.items(), key=lambda kv: (-max(SEVERITY_RANK[f.severity] for f in kv[1]), -len(kv[1]))
+    )
+    if risky:
+        section("TOP RISK FILES", "1;91")
+        for path, fs in risky[:5]:
+            counts = ", ".join(
+                f"{n} {sev}" for sev in ("high", "medium", "low") if (n := sum(1 for f in fs if f.severity == sev))
+            )
+            w(f"  {c(display_path(path), '1;91')}  ({counts})\n")
+        w("\n")
+        rule("═")
+        section("RECOMMENDATIONS", "1;96")
+        seen = sorted({f.rule for f in analysis.findings}, key=lambda r: (-SEVERITY_RANK[RULES[r].severity], r))
+        for i, rid in enumerate(seen, 1):
+            w(c(f"  {i}. [{rid}] {RULES[rid].fix}", "96") + "\n")
+        w("\n")
+        rule("═")
+    else:
+        w("\n" + c("  ✓ No cost risks found.", "1;92") + "\n\n")
+        rule("═")
+
+    n = len(analysis.findings)
+    high = sum(1 for f in analysis.findings if f.severity == "high")
+    w(
+        c(f"  {n} finding(s), {high} high, in {len(analysis.files):,} file(s)", "1;91" if high else "1;92")
+        + c("   ·   agentguard --list-rules for details", "2")
+        + "\n\n"
+    )
 
 
 # ─── JSON ─────────────────────────────────────────────────────────────────────
@@ -286,8 +434,11 @@ def render(
     out: TextIO = sys.stdout,
     color: bool = False,
     show_costs: bool = True,
+    pretty: bool = False,
 ) -> None:
-    if fmt == "text":
+    if fmt == "text" and pretty:
+        render_pretty(analysis, est, out, color, show_costs)
+    elif fmt == "text":
         render_text(analysis, est, out, color, show_costs)
     elif fmt == "json":
         out.write(json.dumps(build_json(analysis, est), indent=2) + "\n")

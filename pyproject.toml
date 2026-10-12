@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentguard-lint"
-version = "0.3.0"
+version = "0.3.1"
 description = "Find LLM cost risks in Python agent code - unbounded loops, quadratic history growth - and estimate what a run costs."
 readme = "README.md"
 requires-python = ">=3.9"

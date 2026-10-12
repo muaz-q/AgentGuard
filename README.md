@@ -82,10 +82,17 @@ spreadsheet - was 99% low: it is linear in the number of turns, while turn *k* r
 
 ```bash
 pip install agentguard-lint
+cd path/to/your/project
 agentguard .                    # scan the current project
 ```
 
 Python 3.9+. No runtime dependencies (`tomli` on 3.9/3.10).
+
+In a terminal you get a colour report - per-file risk, cost by loop depth, a cost summary,
+the riskiest files and recommendations. When the output is piped or saved it switches to the
+one-line-per-finding format shown above, which CI systems and editors parse; `--pretty` and
+`--plain` force either. Scanning a home directory or a whole drive is refused
+(`--scan-anyway` overrides), and Ctrl+C stops cleanly.
 
 ## Use it in CI
 
@@ -101,7 +108,7 @@ jobs:
     permissions: { contents: read, security-events: write }
     steps:
       - uses: actions/checkout@v5
-      - uses: muaz-q/AgentGuard@v0.3.0
+      - uses: muaz-q/AgentGuard@v0.3.1
         with:
           fail-on: high        # high | medium | low | never
 ```
@@ -110,7 +117,7 @@ jobs:
 
 ```yaml
 - repo: https://github.com/muaz-q/AgentGuard
-  rev: v0.3.0
+  rev: v0.3.1
   hooks:
     - id: agentguard
 ```

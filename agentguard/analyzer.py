@@ -969,12 +969,21 @@ def _load(path: Path, root: Path) -> _Module:
     return _Module(path, module, source, tree)
 
 
-def analyze_project(files: Sequence[Path], root: Path) -> ProjectAnalysis:
-    mods = [_load(p, root) for p in files]
-    by_name: Dict[str, _Module] = {m.module: m for m in mods}
+def analyze_project(
+    files: Sequence[Path], root: Path, progress: Optional[Callable[[int, int], None]] = None
+) -> ProjectAnalysis:
+    """``progress(done, total)`` is called as files are read and indexed."""
+    total = len(files)
+    mods: List[_Module] = []
+    by_name: Dict[str, _Module] = {}
 
-    # Pass 1: imports, functions, direct LLM use.
-    for m in mods:
+    # Pass 1: parse, then learn imports, functions and direct LLM use.
+    for i, path in enumerate(files, 1):
+        m = _load(path, root)
+        mods.append(m)
+        by_name[m.module] = m
+        if progress:
+            progress(i, total)
         if m.tree is None:
             continue
         v = _Visitor(m)

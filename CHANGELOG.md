@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.3.1 - 2026-10-12
+
+### Added
+
+- On a terminal the report is the banner-and-sections view again - file analysis with a risk
+  label per file, cost per loop depth, cost summary, top risk files and recommendations - in
+  colour, now built from the 0.3 analysis. Output that is piped or redirected keeps the
+  one-line-per-finding format that CI and editors parse. `--pretty` and `--plain` force either.
+- A progress line on stderr for scans that take more than a moment.
+
+### Fixed
+
+- Running `agentguard` with no path from a home directory scanned the whole user folder and
+  looked frozen. Scanning a home directory or a drive root is now refused with a hint;
+  `--scan-anyway` overrides.
+- Folders Windows marks hidden or system (such as `AppData`) are skipped, like dot-folders.
+- Ctrl+C prints `agentguard: interrupted` and exits with status 130 instead of a traceback.
+
 ## 0.3.0 - 2026-10-12
 
 The package is now published as `agentguard-lint` (`pip install agentguard-lint`); the command

@@ -5,18 +5,19 @@ from __future__ import annotations
 import argparse
 import io
 import sys
+import time
 from pathlib import Path
 from typing import List, Optional, Sequence
 
 from agentguard import __version__, config
 from agentguard.analyzer import analyze_project
-from agentguard.crawler import crawl
+from agentguard.crawler import crawl, too_broad
 from agentguard.estimator import Assumptions, estimate
 from agentguard.pricing import DEFAULT_MODEL, PriceTable
 from agentguard.reporter import FORMATS, render, use_color
 from agentguard.rules import RULES, SEVERITY_RANK
 
-EXIT_OK, EXIT_FINDINGS, EXIT_ERROR = 0, 1, 2
+EXIT_OK, EXIT_FINDINGS, EXIT_ERROR, EXIT_INTERRUPTED = 0, 1, 2, 130
 
 
 def _rule_list(text: str) -> List[str]:
@@ -62,6 +63,20 @@ def build_parser() -> argparse.ArgumentParser:
     out.add_argument("-f", "--format", choices=FORMATS, default="text")
     out.add_argument("-o", "--output", metavar="FILE", help="write the report to FILE instead of stdout")
     out.add_argument("--no-costs", action="store_true", help="findings only; skip the cost estimate")
+    style = out.add_mutually_exclusive_group()
+    style.add_argument(
+        "--pretty",
+        dest="pretty",
+        action="store_true",
+        default=None,
+        help="banner-and-sections report (the default on a terminal)",
+    )
+    style.add_argument(
+        "--plain",
+        dest="pretty",
+        action="store_false",
+        help="one line per finding, file:line:col (the default when piped or in CI)",
+    )
     out.add_argument("--color", dest="color", action="store_true", default=None)
     out.add_argument("--no-color", dest="color", action="store_false")
 
@@ -74,6 +89,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="exit 1 if any finding is at least this severe (default: high)",
     )
     rules.add_argument("--exclude", action="append", metavar="GLOB", help="skip matching paths (repeatable)")
+    rules.add_argument(
+        "--scan-anyway",
+        action="store_true",
+        help="allow scanning a home directory or a whole drive (refused by default)",
+    )
 
     cost = p.add_argument_group("cost model")
     cost.add_argument(
@@ -119,6 +139,34 @@ def _utf8_streams() -> None:
                 stream.reconfigure(errors="replace")
             else:
                 stream.reconfigure(encoding="utf-8", errors="replace")
+
+
+class _Progress:
+    """A single self-overwriting status line on stderr, shown only on a terminal and only
+    once a scan has run long enough to need one."""
+
+    def __init__(self, stream=None, enabled: Optional[bool] = None, delay: float = 0.3):
+        self.stream = stream or sys.stderr
+        self.enabled = (hasattr(self.stream, "isatty") and self.stream.isatty()) if enabled is None else enabled
+        self.start = time.monotonic()
+        self.delay = delay
+        self.last = 0.0
+        self.shown = False
+
+    def update(self, text: str) -> None:
+        now = time.monotonic()
+        if not self.enabled or now - self.start < self.delay or now - self.last < 0.1:
+            return
+        self.last = now
+        self.stream.write("\r  " + text.ljust(60)[:60])
+        self.stream.flush()
+        self.shown = True
+
+    def clear(self) -> None:
+        if self.shown:
+            self.stream.write("\r" + " " * 64 + "\r")
+            self.stream.flush()
+            self.shown = False
 
 
 def _err(msg: str) -> None:
@@ -173,15 +221,32 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         model=args.model or cfg.get("model", DEFAULT_MODEL),
     )
 
+    broad = [p for p in paths if Path(p).is_dir() and too_broad(p)]
+    if broad and not args.scan_anyway:
+        where = Path(broad[0]).resolve()
+        _err(
+            f"refusing to scan {where}: that is your home directory or a whole drive, which is never a "
+            "single project.\n  Run it on a project folder, e.g.  agentguard path\\to\\project  "
+            "(or pass --scan-anyway)."
+        )
+        return EXIT_ERROR
+
+    progress = _Progress()
     try:
-        files = crawl(paths, exclude=(args.exclude or []) + list(cfg.get("exclude", [])))
+        files = crawl(
+            paths,
+            exclude=(args.exclude or []) + list(cfg.get("exclude", [])),
+            on_file=lambda n: progress.update(f"finding Python files... {n:,}"),
+        )
     except (FileNotFoundError, RuntimeError) as e:
+        progress.clear()
         _err(str(e))
         return EXIT_ERROR
 
     root = Path(paths[0]).resolve()
     root = root if root.is_dir() else root.parent
-    analysis = analyze_project(files, root)
+    analysis = analyze_project(files, root, progress=lambda i, n: progress.update(f"analysing {i:,} / {n:,} files"))
+    progress.clear()
 
     select = set(args.select or cfg.get("select") or RULES)
     ignore = set(args.ignore or cfg.get("ignore") or [])
@@ -197,10 +262,19 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     show_costs = not args.no_costs and not args.quiet
     if output:
         with open(output, "w", encoding="utf-8", newline="\n") as f:
-            render(fmt, analysis, est, f, color=False, show_costs=show_costs)
+            render(fmt, analysis, est, f, color=False, show_costs=show_costs, pretty=bool(args.pretty))
         print(f"agentguard: wrote {fmt} report to {output}", file=sys.stderr)
     else:
-        render(fmt, analysis, est, sys.stdout, color=use_color(sys.stdout, args.color), show_costs=show_costs)
+        pretty = args.pretty if args.pretty is not None else (sys.stdout.isatty() and not args.quiet)
+        render(
+            fmt,
+            analysis,
+            est,
+            sys.stdout,
+            color=use_color(sys.stdout, args.color),
+            show_costs=show_costs,
+            pretty=pretty,
+        )
 
     fail_on = args.fail_on or cfg.get("fail_on", "high")
     if fail_on != "never" and any(SEVERITY_RANK[f.severity] >= SEVERITY_RANK[fail_on] for f in analysis.findings):
@@ -209,7 +283,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
 
 def entry() -> None:
-    sys.exit(main())
+    try:
+        code = main()
+    except KeyboardInterrupt:
+        print("\nagentguard: interrupted", file=sys.stderr)
+        code = EXIT_INTERRUPTED
+    sys.exit(code)
 
 
 if __name__ == "__main__":
