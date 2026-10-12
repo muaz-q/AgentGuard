@@ -1,6 +1,6 @@
 # AgentGuard
 
-[![CI](https://github.com/muaz-q/agentguard/actions/workflows/ci.yml/badge.svg)](https://github.com/muaz-q/agentguard/actions/workflows/ci.yml)
+[![CI](https://github.com/muaz-q/AgentGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/muaz-q/AgentGuard/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/agentguard-cli)](https://pypi.org/project/agentguard-cli/)
 [![Python](https://img.shields.io/pypi/pyversions/agentguard-cli)](https://pypi.org/project/agentguard-cli/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -101,7 +101,7 @@ jobs:
     permissions: { contents: read, security-events: write }
     steps:
       - uses: actions/checkout@v4
-      - uses: muaz-q/agentguard@v0.3.0
+      - uses: muaz-q/AgentGuard@v0.3.0
         with:
           fail-on: high        # high | medium | low | never
 ```
@@ -109,7 +109,7 @@ jobs:
 **pre-commit:**
 
 ```yaml
-- repo: https://github.com/muaz-q/agentguard
+- repo: https://github.com/muaz-q/AgentGuard
   rev: v0.3.0
   hooks:
     - id: agentguard

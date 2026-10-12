@@ -1,6 +1,6 @@
 # Use from another repository's .pre-commit-config.yaml:
 #
-#   - repo: https://github.com/muaz-q/agentguard
+#   - repo: https://github.com/muaz-q/AgentGuard
 #     rev: v0.3.0
 #     hooks:
 #       - id: agentguard

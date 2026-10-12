@@ -15,7 +15,7 @@ from agentguard.rules import RULES, SEVERITY_RANK
 
 FORMATS = ("text", "json", "sarif", "markdown")
 SARIF_LEVEL = {"high": "error", "medium": "warning", "low": "note"}
-REPO_URL = "https://github.com/muaz-q/agentguard"
+REPO_URL = "https://github.com/muaz-q/AgentGuard"
 
 
 def display_path(path: Path) -> str:

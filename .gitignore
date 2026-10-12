@@ -11,3 +11,8 @@ build/
 htmlcov/
 bench/.repos/
 bench/.validation.log
+
+# landing page tooling
+node_modules/
+package-lock.json
+package.json

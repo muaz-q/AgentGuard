@@ -36,8 +36,8 @@ dev = [
 
 [project.urls]
 Homepage = "https://agent-guard-six.vercel.app"
-Source = "https://github.com/muaz-q/agentguard"
-Issues = "https://github.com/muaz-q/agentguard/issues"
+Source = "https://github.com/muaz-q/AgentGuard"
+Issues = "https://github.com/muaz-q/AgentGuard/issues"
 
 [project.scripts]
 agentguard = "agentguard.cli:entry"
